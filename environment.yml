@@ -1,0 +1,16 @@
+name: aura
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pip
+  - numpy
+  - pandas
+  - pydantic
+  - python-dotenv
+  - rich
+  - pytest
+  - requests
+  - pyyaml
+  - pip:
+      - ollama

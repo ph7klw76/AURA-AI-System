@@ -1,4 +1,4 @@
-# AURA Core MVP
+# AURA Core
 
 **Autonomous University Research Assistant Core** — a local-model, governed, multi-agent research-assistant prototype for OLED, TADF, photophysics, organic-semiconductor, red/NIR-emission, and lanthanide-complex research workflows.
 

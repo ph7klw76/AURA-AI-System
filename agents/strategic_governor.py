@@ -68,6 +68,15 @@ Always include self_evolution_engine last if self_evolution_policy.run is true.
 research_scan, idea_evaluation, grant_strategy, teaching, communication,
 collaboration, data_analysis, admin, unknown
 
+--- WHEN TO USE idea_evaluation vs research_scan ---
+idea_evaluation + research_scout_mode=ideation: user is EXPLORING or EVALUATING an idea/proposal
+    without explicitly asking to search for papers. Signals: "explore", "evaluate this idea",
+    "what is the opportunity", "research proposal on X", "what should I verify", "hypothesis",
+    "proposal concept", "scientific strategy". Do NOT search papers — just ideate.
+research_scan + research_scout_mode=literature_scan: user explicitly wants to FIND or SEARCH papers.
+    Signals: "find papers", "search papers", "recent papers", "scan arXiv", "weekly brief",
+    "literature review", "what papers exist".
+
 --- AUTONOMY LEVELS ---
 L0: answer only (no search, no files)
 L1: draft text in memory only
@@ -222,7 +231,22 @@ def _enforce_evidence_depth(decision: GovernorDecision, user_input: str) -> Gove
     return decision
 
 
-def _derive_backward_compat(decision: GovernorDecision) -> GovernorDecision:
+# Keyword-based mode correction mirrors research_scout._resolve_mode so the governor's
+# research_scout_mode field is always consistent with what the scout will actually use.
+_GOVERNOR_MODE_KEYWORDS: list[tuple[str, list[str]]] = [
+    ("gap_analysis", ["gap analysis", "research gap", "identify gap", "what is the gap",
+                      "gap in the literature"]),
+    ("grant_opportunity", ["grant opportunity", "funding angle", "grant-relevant",
+                           "write a grant", "grant call", "grant application"]),
+    ("literature_scan", ["find papers", "search papers", "recent papers", "literature scan",
+                         "arxiv", "openalex", "weekly brief", "top papers", "score papers",
+                         "paper ranking", "latest papers", "literature review"]),
+    ("ideation", ["research idea", "proposal concept", "hypothesis", "grant angle",
+                  "scientific strategy", "evaluate this idea", "explore"]),
+]
+
+
+def _derive_backward_compat(decision: GovernorDecision, user_input: str = "") -> GovernorDecision:
     """Ensure legacy fields are consistent with the new structured fields."""
     # Derive selected_agents from workflow_sequence when the LLM omitted them
     if decision.workflow_sequence and not decision.selected_agents:
@@ -253,6 +277,18 @@ def _derive_backward_compat(decision: GovernorDecision) -> GovernorDecision:
         for step in decision.workflow_sequence:
             if step.agent == "research_scout" and step.mode:
                 decision.research_scout_mode = step.mode
+                break
+
+    # Apply keyword-based correction so research_scout_mode always matches user phrasing.
+    # This mirrors research_scout._resolve_mode and ensures both layers agree.
+    if user_input:
+        lower = user_input.lower()
+        for mode, keywords in _GOVERNOR_MODE_KEYWORDS:
+            if any(kw in lower for kw in keywords):
+                decision.research_scout_mode = mode
+                # Align task_type with ideation / idea_evaluation
+                if mode == "ideation" and decision.task_type not in ("idea_evaluation", "grant_strategy"):
+                    decision.task_type = "idea_evaluation"
                 break
 
     return decision
@@ -302,6 +338,6 @@ def run(user_input: str) -> dict:
 
     decision = _enforce_safety(decision, user_input)
     decision = _enforce_evidence_depth(decision, user_input)
-    decision = _derive_backward_compat(decision)
+    decision = _derive_backward_compat(decision, user_input)
 
     return decision.model_dump()

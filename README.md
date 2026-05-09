@@ -1,4 +1,4 @@
-# AURA Core
+# Automated University Research Assistant Core (AURA) Core
 
 **A local, governance-oriented multi-agent research assistant for OLED/TADF, photophysics, organic-electronics, and red/NIR emitter research.**
 
@@ -13,7 +13,7 @@
 
 ## Repository summary
 
-AURA Core is a local Python research-assistant prototype built around a governed multi-agent workflow. It routes user requests through a **Strategic Governor**, executes one or more specialist agents, applies a **Scientific Verifier** to technical claims, and records constrained self-evolution notes for future sessions.
+Automated University Research Assistant Core (AURA) is a local Python research-assistant prototype built around a governed multi-agent workflow. It routes user requests through a **Strategic Governor**, executes one or more specialist agents, applies a **Scientific Verifier** to technical claims, and records constrained self-evolution notes for future sessions.
 
 The system is configured for a research profile centered on:
 

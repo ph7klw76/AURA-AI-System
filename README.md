@@ -1,4 +1,4 @@
-# Self Evolution Automated University Research Assistant Core (AURA)
+# Self Evolution Automated University Research Assistant (AURA)
 
 **A local, governance-oriented multi-agent research assistant for OLED/TADF, photophysics, organic-electronics, and red/NIR emitter research.**
 

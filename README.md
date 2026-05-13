@@ -1,4 +1,4 @@
-# AURA  
+# Adaptive Understanding, Research & Action Agentic AI system (AURA)
 ## Governed multi-agent research workflow tooling for evidence-aware scientific drafting, literature triage, and reflective workflow improvement
 
 ![Python](https://img.shields.io/badge/Python-3.11-blue)

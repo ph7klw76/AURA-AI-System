@@ -957,7 +957,7 @@ The codebase is already substantial, but a paper-facing release would benefit fr
 
 ---
 
-# Acknowledgments
+# NOTE
 
 AURA embodies a research-engineering approach to LLM-assisted scientific work that prioritizes inspectable orchestration, conservative claims, and explicit governance. The repository’s design is especially notable for treating approvals, persistence, retry logic, and reflective evolution as first-class software concerns rather than informal prompt conventions.
 

@@ -258,7 +258,7 @@ The archive contains **56 Python files**. The inventory below lists **every `.py
 
 ---
 
-# Suggested publication-facing repository layout
+# repository layout
 
 The following tree preserves the actual code organization while making the repository easier to scan on GitHub. Every Python file present in the archive is listed.
 
@@ -963,23 +963,3 @@ AURA embodies a research-engineering approach to LLM-assisted scientific work th
 
 ---
 
-# Maintainer note
-
-Present this repository as a **research workflow prototype and publication companion**. The code demonstrably supports:
-
-- governed routing,
-- specialist drafting,
-- literature-facing integrations,
-- internal evidence-aware review,
-- bounded retry behavior,
-- artifact persistence,
-- manually approved evolution proposals.
-
-It should **not** be presented as:
-
-- an autonomous scientist,
-- a validated patent-search system,
-- an independent scientific fact checker,
-- or an unrestricted external-action agent.
-
-That distinction is central to the repository’s technical credibility.

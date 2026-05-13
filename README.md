@@ -1,6 +1,8 @@
 # Adaptive Understanding, Research & Action Agentic AI system (AURA)
 ## Governed multi-agent research workflow tooling for evidence-aware scientific drafting, literature triage, and reflective workflow improvement
 
+### AURA transforms fragmented research into evidence-grounded, reproducible, execution-ready scientific missions under transparent human governance
+
 ![Python](https://img.shields.io/badge/Python-3.11-blue)
 ![Environment](https://img.shields.io/badge/environment-conda%20%2B%20pip-brightgreen)
 ![Interface](https://img.shields.io/badge/interface-interactive%20CLI-purple)
@@ -9,6 +11,7 @@
 ![Review](https://img.shields.io/badge/review-internal%20evidence--aware%20verification-lightgrey)
 
 ---
+<img width="932" height="713" alt="image" src="https://github.com/user-attachments/assets/fe61d43d-c5fc-400d-b037-4c8f6e5c3f38" />
 
 ## Repository summary
 

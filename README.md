@@ -10,7 +10,7 @@
 
 ---
 
-## Publication-style repository summary
+## Repository summary
 
 **AURA** is a Python research-workflow prototype that routes scientific requests through a governed multi-agent pipeline. The implementation combines:
 

@@ -1,4 +1,4 @@
-# AURA
+# Adaptive Understanding, Research & Action Agentic AI system (AURA)
 ## Governed Multi-Agent Research Assistance for Scientific Workflows
 
 [![Python](https://img.shields.io/badge/Python-3.11-blue.svg)](#suggested-software-environment)

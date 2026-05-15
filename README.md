@@ -819,35 +819,6 @@ AURA is most appropriately interpreted as a **governed AI research workflow prot
 
 This architecture is useful for studying how research assistants can become more inspectable and less likely to overstate their autonomy.
 
----
-
-# Example citation block
-
-```bibtex
-@software{aura_research_workflows,
-  title        = {AURA: Governed Multi-Agent Research Assistance and Evidence-Aware Workflow Prototyping},
-  author       = {Repository Maintainer},
-  year         = {2026},
-  url          = {Repository URL},
-  note         = {Research software prototype; cite the archived release or exact commit used in analysis.}
-}
-```
-
----
-
-# Recommended additions for publication readiness
-
-The following are recommended future additions, not confirmed current repository features:
-
-- a `CITATION.cff` file,
-- a manuscript-linked release tag,
-- CI that separates deterministic tests from live LLM diagnostics,
-- sanitized example outputs under an examples directory,
-- a consolidated environment-variable reference table,
-- reproducibility notes tied to specific paper experiments,
-- and a more formal validation protocol for routed outputs and verifier behavior.
-
----
 
 # Limitations
 

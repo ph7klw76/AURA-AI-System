@@ -1,5 +1,5 @@
 # AURA 
-## Governed Multi-Agent Research Assistance, Deep Research, Local Evidence Ingestion, and Patent Reconnaissance
+## Adaptive Multi-Agent Research Assistance, Deep Research, Local Evidence Ingestion, and Patent Reconnaissance System
 
 ![Python](https://img.shields.io/badge/Python-3.11-blue)
 ![Environment](https://img.shields.io/badge/environment-conda%20%2B%20pip-44aa99)

@@ -1,348 +1,433 @@
-# AURA  
-## Governed Multi-Agent Research Assistance, Deep Research, Local Evidence Ingestion, and Patent Reconnaissance
+# AURA
 
-![Python](https://img.shields.io/badge/Python-3.11-blue)
-![Environment](https://img.shields.io/badge/environment-conda%20%2B%20pip-44aa99)
-![LLM Runtime](https://img.shields.io/badge/LLM-Ollama%20or%20OpenAI--compatible%20API-purple)
-![Search](https://img.shields.io/badge/web%20search-SearXNG%20or%20explicit%20mock-lightgrey)
-![Status](https://img.shields.io/badge/status-research%20prototype-orange)
-![Artifacts](https://img.shields.io/badge/artifacts-reports%20%2B%20JSONL%20%2B%20SQLite-success)
+> **A governed, multi-agent research-assistance framework for literature exploration, scientific drafting, deep-research evidence packs, local-document retrieval, preliminary patent-web reconnaissance, and reviewable workflow reflection.**
+
+<p align="left">
+  <img alt="Python 3.11" src="https://img.shields.io/badge/Python-3.11-blue">
+  <img alt="Conda environment" src="https://img.shields.io/badge/environment-conda-informational">
+  <img alt="Research software" src="https://img.shields.io/badge/research-software-6f42c1">
+  <img alt="LLM orchestration" src="https://img.shields.io/badge/LLM-governed%20multi--agent-orange">
+  <img alt="Status" src="https://img.shields.io/badge/status-research%20prototype-yellow">
+</p>
 
 ---
 
 ## Repository summary
 
-**AURA** is a research-oriented Python system for governed, multi-agent scholarly assistance. It combines:
+**AURA** is a Python research-assistance system built around an explicit control plane:
 
-- strategic task routing across specialist agents,
-- a scientific verification layer with conservative decision routes,
-- optional self-evolution proposals that remain subject to human review,
-- literature-oriented research support and research-profile persistence,
-- direct deep-research missions with evidence logging and report generation,
-- optional local document ingestion for PDF, DOCX, and text folders,
-- and Stage 1 patent-web reconnaissance over publicly indexed patent pages.
+1. a **Strategic Governor** classifies the request and proposes an execution route;
+2. selected **specialist agents** generate structured outputs;
+3. a **Scientific Verifier** reviews specialist outputs and the full session;
+4. the orchestrator gates report persistence, retry behavior, and self-evolution reflection;
+5. optional **Self-Evolution** artifacts are surfaced for human review rather than silently applied.
 
-The repository is suitable for a **paper or publication companion repository** when presented as a **research software prototype**. It implements substantial workflow logic, persistence, and auditability, but it does **not** claim formal validation, exhaustive patent search, or fully autonomous research decision-making.
+The repository implements:
+
+- an interactive terminal application (`main.py`);
+- direct deep-research CLI commands for evidence-pack generation and report synthesis;
+- specialist workflows for literature strategy, grant framing, teaching drafts, analysis planning, public communication, collaboration preparation, commercialization reflection, and preliminary patent-web reconnaissance;
+- local-folder ingestion for selected workflows using PDF, DOCX, TXT, and Markdown extraction;
+- SearXNG-backed real web search with explicit synthetic/mock fallback when unavailable;
+- verifier-aware Markdown report persistence and visibly segregated unverified drafts;
+- reviewable self-evolution proposals and an approval CLI.
+
+AURA is best read as a **research prototype and publication-companion repository**. It prepares structured scientific and strategic drafts, but it does not autonomously submit proposals, publish content, contact collaborators, perform legal review, or replace expert scientific judgment.
 
 ---
 
 ## Why this repository exists
 
-Many research-support tasks require more than a one-shot language-model response. A practical research assistant may need to:
+Many LLM research assistants mix together routing, drafting, evidence retrieval, action recommendations, and confidence language. AURA separates those concerns in code.
 
-1. interpret a research request,
-2. choose a suitable specialist workflow,
-3. retrieve or ingest evidence,
-4. generate a structured output,
-5. critique that output,
-6. persist auditable artifacts,
-7. and propose improvements without silently modifying its own operating profile.
+The repository explores how a research-support system can:
 
-AURA operationalizes that design as code. It provides a modular framework for evidence-aware research drafting, literature reconnaissance, local-document support, patent reconnaissance, and human-gated adaptation.
+- make task routing explicit;
+- order upstream evidence generation before downstream drafting;
+- verify outputs before ordinary draft persistence;
+- distinguish external search evidence, local user-provided context, and synthetic fallback data;
+- pause for missing user input instead of inventing local-file context;
+- prepare external-facing communication without executing it;
+- record workflow lessons while requiring review for consequential profile changes.
 
 ---
 
-## Graphical abstract / workflow diagram
+## Graphical abstract / governed workflow
 
 ```mermaid
 flowchart TD
-    A["User prompt<br/>interactive CLI or direct research command"] --> B["Strategic Governor<br/>task interpretation and routing"]
+    A["User request"] --> B["Strategic Governor<br/>classification, agent selection,<br/>workflow hints, approval posture"]
+    B --> C["Dependency-aware orchestrator<br/>canonical specialist ordering"]
+    C --> D1["Research Scout"]
+    C --> D2["Patent Intelligence"]
+    C --> D3["Grant Architect"]
+    C --> D4["Lab/Data Analyst"]
+    C --> D5["Teaching Mentor"]
+    C --> D6["Public Communication"]
+    C --> D7["Collaboration Operator"]
+    C --> D8["Founder / Innovation"]
 
-    B --> C["Specialist agents<br/>research, grants, teaching,<br/>patents, collaboration, communication,<br/>lab analysis, innovation"]
-    C --> D["Optional local evidence ingestion<br/>PDF / DOCX / text folder"]
-    C --> E["Scientific Verifier<br/>claim-aware workflow review"]
+    D1 --> E["Structured specialist outputs"]
+    D2 --> E
+    D3 --> E
+    D4 --> E
+    D5 --> E
+    D6 --> E
+    D7 --> E
+    D8 --> E
 
-    E --> F{"Verifier route"}
-    F -->|"approve or revise"| G["Safe draft persistence<br/>reports/*.md"]
-    F -->|"retrieve_more_evidence"| H["Bounded retry loop<br/>revision or evidence retrieval"]
-    F -->|"human_review or reject"| I["Fail-closed persistence behavior"]
+    E --> F["Per-specialist verification<br/>when required by registry"]
+    F --> G["Holistic session verifier"]
+    G --> H{"Final verifier route"}
 
-    H --> E
+    H -->|approve or revise| I["Persist ordinary Markdown drafts<br/>under reports/"]
+    H -->|retrieve_more_evidence,<br/>human_review, reject,<br/>or verifier failure| J["Fail closed for ordinary persistence<br/>and optionally save UNVERIFIED drafts<br/>under reports/pending_review/"]
 
-    E --> J["Self-Evolution Engine<br/>draft lessons and update proposals"]
-    J --> K["Human review workflow<br/>approval script or interactive evolution command"]
+    G --> K["Optional retry loop<br/>literature retrieval or revision strategy"]
+    K --> G
 
-    L["Direct deep-research CLI<br/>main.py research"] --> M["Mission planning"]
-    M --> N["SearXNG or explicit mock search provider"]
-    N --> O["Source fetch + claim extraction"]
-    O --> P["Gap analysis + verification bridge"]
-    P --> Q["Markdown report<br/>Evidence JSONL<br/>Reflection JSON"]
+    G --> L["Self-Evolution Engine<br/>reflection and governed proposals"]
+    L --> M["Human review via CLI<br/>scripts/approve_evolution.py"]
 ```
 
 ---
 
 ## Repository scope
 
-| Area | Implemented behavior |
+### Implemented
+
+| Capability | Status in code |
 |---|---|
-| Core orchestrated workflow | Multi-agent routing through a strategic governor, specialist execution, verifier review, bounded retry logic, draft persistence gates, and optional self-evolution proposals |
-| Direct deep research | Mission planning, search-provider resolution, source fetching, evidence extraction, gap analysis, verification bridge, report generation, evidence persistence, and reflections |
-| Research evolution | Profile-aware literature support, paper-source integrations, scoring, gap analysis, literature memory, reporting, and profile-evolution utilities |
-| Patent reconnaissance | Stage 1 web-based discovery of public patent landing pages through SearXNG, page fetching, metadata extraction, evidence construction, and deduplication |
-| Local document evidence | Folder discovery, PDF/DOCX/text extraction, chunking, session-scoped indexing, keyword-overlap retrieval, and structured ingestion reporting |
-| Human governance | Approval logging, reviewer-visible self-evolution proposals, and explicit gating for consequential actions |
-| Diagnostics | Live diagnostic scripts and smoke-style validation helpers for engineering inspection rather than formal scientific benchmarking |
+| Interactive AURA CLI | Implemented |
+| Direct deep-research CLI | Implemented |
+| Strategic routing and specialist registry | Implemented |
+| Canonical dependency-aware specialist ordering | Implemented |
+| Per-specialist and holistic verifier passes | Implemented |
+| Retry logic for selected verifier routes | Implemented |
+| Safe-route draft persistence | Implemented |
+| Segregated unverified-draft persistence | Implemented |
+| Self-evolution proposal generation and approval review | Implemented |
+| Local-folder ingestion for literature/patent contexts | Implemented |
+| SearXNG search provider | Implemented |
+| Explicit mock search fallback | Implemented |
+| Patent-web reconnaissance from public indexed pages | Implemented as Stage 1 reconnaissance |
+| Diagnostic and live-validation scripts | Implemented as engineering diagnostics, not formal benchmarking |
 
----
+### Not claimed
 
-## Component overview
-
-### Top-level entry points
-
-| File | Purpose |
+| Not claimed | Reason |
 |---|---|
-| `main.py` | Primary CLI for interactive AURA sessions and direct deep-research subcommands |
-| `config.py` | Central configuration for models, paths, search, patent-web settings, and persistence locations |
-| `_demo_pipelines.py` | Demonstration helper for route or pipeline inspection |
-| `_diagnose_governor.py` | Governor-focused diagnostic utility |
-| `_diagnose_llm.py` | LLM connectivity diagnostic utility |
-| `_e2e_test.py` | End-to-end smoke-style test utility |
-
-### Agent layer
-
-| File | Role |
-|---|---|
-| `agents/strategic_governor.py` | Selects agents, encodes routing decisions, and enforces Python-level safety triggers for selected high-risk actions |
-| `agents/research_scout.py` | Supports research-scout modes including ideation, literature scan, gap analysis, grant opportunity framing, and direct deep-research integration |
-| `agents/scientific_verifier.py` | Produces schema-aware verification reports, consumes structured evidence, and emits verifier routes |
-| `agents/self_evolution_engine.py` | Produces governed reflection records and draft profile-update proposals; proposals are not auto-applied |
-| `agents/grant_architect.py` | Generates grant-oriented proposal structures and related research-planning outputs |
-| `agents/teaching_mentor.py` | Generates teaching-oriented explanations and instructional content |
-| `agents/lab_data_analyst.py` | Produces analysis-oriented plans, checks, and reproducibility-oriented guidance |
-| `agents/influence_public_communication.py` | Produces public-communication drafts; it does not publish content |
-| `agents/collaboration_operator.py` | Produces collaboration-oriented suggestions and draft communications; it does not contact people |
-| `agents/founder_innovation.py` | Produces innovation or commercialization-oriented reasoning; it is not legal, investment, or business counsel |
-| `agents/patent_intelligence.py` | Performs Stage 1 patent-web reconnaissance with explicit non-exhaustiveness and non-legal-advice constraints |
-
-### Core orchestration and governance
-
-| File | Role |
-|---|---|
-| `core/orchestrator.py` | Main AURA control plane |
-| `core/registry.py` | Agent registration and dispatch support |
-| `core/permissions.py` | Approval and action-gating support |
-| `core/evolution_review.py` | Review workflow for proposed self-evolution updates |
-| `core/draft_writer.py` | Markdown draft persistence after safe verifier routes |
-| `core/formatter.py` | Console rendering utilities |
-| `core/llm.py` | LLM invocation wrappers |
-| `core/runtime.py` | Ollama readiness support |
-| `core/searxng_runtime.py` | SearXNG runtime readiness support |
-| `core/memory.py` | Memory and reflection persistence helpers |
-| `core/normalization.py` | Defensive data normalization |
-| `core/schemas.py` | Shared typed schemas |
-
-### Deep-research subsystem
-
-| File | Role |
-|---|---|
-| `qwen_evolver/deep_research/orchestrator.py` | Runs a complete direct deep-research mission |
-| `qwen_evolver/deep_research/planner.py` | Plans search branches and queries from a mission |
-| `qwen_evolver/deep_research/search_providers.py` | Search-provider abstraction, including SearXNG and explicit mock fallback |
-| `qwen_evolver/deep_research/source_reader.py` | Fetches and normalizes source pages |
-| `qwen_evolver/deep_research/evidence_extractor.py` | Extracts evidence claims from fetched sources |
-| `qwen_evolver/deep_research/evidence_store.py` | Persists evidence packs |
-| `qwen_evolver/deep_research/gap_analyzer.py` | Identifies evidence gaps and follow-up queries |
-| `qwen_evolver/deep_research/verifier_bridge.py` | Bridges deep-research artifacts into the verification stage |
-| `qwen_evolver/deep_research/report_builder.py` | Builds structured Markdown reports |
-| `qwen_evolver/deep_research/research_logger.py` | Persists research reflections |
-| `qwen_evolver/deep_research/citation_manager.py` | Citation-management support within the deep-research package |
-| `qwen_evolver/deep_research/schemas.py` | Deep-research data models |
-
-### Integrations
-
-| Package | Role |
-|---|---|
-| `integrations/patent_web/` | Stage 1 public patent-page reconnaissance |
-| `integrations/research_evolution/` | Research profile, literature memory, paper scoring, paper-source access, gap analysis, and reports |
-
-### Scripts
-
-| File | Purpose |
-|---|---|
-| `scripts/approve_evolution.py` | Reviews pending self-evolution proposals |
-| `scripts/diagnose_wave2.py` | Live diagnostic prompts for selected workflows and safety signals |
-| `scripts/diagnose_wave3.py` | Additional live diagnostic prompts for collaboration, innovation, and patent-related safety signals |
-| `scripts/live_validate_core.py` | Live validation utility for additional scenario prompts |
-| `scripts/setup_searxng_windows.py` | Windows setup helper for the repository's SearXNG deployment scaffold |
-
----
-
-## Combined workflow concept
-
-AURA exposes two principal operating styles.
-
-### 1. Orchestrated multi-agent workflow
-
-The interactive CLI runs the governed specialist pipeline:
-
-```bash
-python main.py
-```
-
-A user prompt flows through:
-
-1. strategic routing,
-2. selected specialist agents,
-3. optional local-document prompting and ingestion,
-4. verifier review,
-5. bounded retry logic when required,
-6. draft persistence only when the final route permits it,
-7. optional self-evolution proposal creation.
-
-### 2. Direct deep-research workflow
-
-The CLI also exposes direct deep-research commands:
-
-```bash
-python main.py research \
-  --query "Map evidence gaps in red-NIR TADF OLED emitters" \
-  --depth standard
-```
-
-and:
-
-```bash
-python main.py research-grants \
-  --query "Develop a grant-facing evidence map for red-NIR OLED stability" \
-  --depth extensive
-```
-
-The direct deep-research path is implemented as its own explicit workflow. It is related to the broader AURA system, but it is not merely a hidden substep of every orchestrated run.
-
----
-
-## Highlights
-
-- Governed multi-agent routing rather than unconstrained agent chaining
-- Verifier-aware persistence gates
-- Bounded retry loops for revision or evidence retrieval
-- Human-reviewable self-evolution proposals
-- Explicit mock-provider labeling in deep research and patent reconnaissance
-- Local-document ingestion with provenance-bearing chunks
-- Patent reconnaissance that is intentionally cautious and stage-limited
-- Structured report, evidence, memory, and approval artifacts
-- Engineering diagnostics that surface safety and routing behavior
+| Autonomous grant submission | The code drafts proposal logic; it does not submit applications. |
+| Autonomous outreach, publishing, or scheduling | The system drafts text and classifies action risk; external execution is not performed. |
+| Formal patentability, novelty, or freedom-to-operate analysis | Patent Intelligence is explicitly web-based, non-exhaustive Stage 1 reconnaissance. |
+| Executed scientific data analysis on arbitrary local datasets | The Lab/Data Analyst produces plans and checks, not a full analytical execution engine. |
+| Benchmark-validated scientific correctness | Diagnostics exist, but the archive does not provide a controlled benchmark suite. |
+| Deterministic outputs across runs | Outputs depend on model selection, live search availability, provider responses, and generation behavior. |
 
 ---
 
 ## Code-to-README validation note
 
-This README is grounded in the supplied repository archive and intentionally distinguishes:
+This README was derived from the archive contents, including:
 
-- **implemented behavior** from
-- **reasonable interpretation** from
-- **recommended future additions**.
+- `main.py`
+- `config.py`
+- `.env.example`
+- `environment.yml`
+- `agents/`
+- `core/`
+- `qwen_evolver/deep_research/`
+- `integrations/`
+- `scripts/`
+- deployment files under `deployment/searxng/`
 
-No claim is made that the repository provides:
+The descriptions below are intentionally conservative. They distinguish:
 
-- exhaustive literature review,
-- rigorous factual validation,
-- legal patent analysis,
-- exact environment reproducibility across machines,
-- or full autonomous publication, outreach, or file-modification workflows.
+- **implemented runtime behavior**;
+- **reasonable interpretation of the implementation**;
+- **publication-readiness recommendations**, which are not present guarantees.
 
 ---
 
-# Detailed workflows
+## Repository architecture
 
-## Workflow A — Interactive AURA session
+### Primary entry points
 
-### Command
+| Path | Role |
+|---|---|
+| `main.py` | Interactive AURA terminal interface and direct deep-research subcommands |
+| `scripts/approve_evolution.py` | Human review CLI for pending self-evolution proposals |
+| `scripts/live_validate_core.py` | Live validation/scenario runner for selected code paths |
+| `scripts/diagnose_wave2.py` | Diagnostic prompts for Wave 2 specialist behavior |
+| `scripts/diagnose_wave3.py` | Diagnostic prompts for Wave 3 specialist behavior |
+| `_diagnose_llm.py` | LLM connectivity / JSON-behavior diagnostics |
+| `_diagnose_governor.py` | Strategic Governor diagnostic utility |
+| `_demo_pipelines.py` | Demonstration-oriented routing/pipeline script |
+| `_e2e_test.py` | Live end-to-end exercise script |
+
+### Core orchestration modules
+
+| Module | Purpose |
+|---|---|
+| `core/orchestrator.py` | End-to-end execution, pauses, retries, verifier aggregation, persistence gating |
+| `core/registry.py` | Runtime agent registry and specialist metadata |
+| `core/schemas.py` | Structured models for system outputs |
+| `core/permissions.py` | Action-policy classification and approval-event logging |
+| `core/draft_writer.py` | Markdown rendering and draft persistence |
+| `core/evolution_review.py` | Review and application logic for evolution proposals |
+| `core/llm.py` | Local/remote LLM calling wrapper |
+| `core/runtime.py` | Ollama readiness/bootstrap helpers |
+| `core/searxng_runtime.py` | SearXNG readiness/bootstrap helpers |
+| `core/local_documents/` | Discovery, extraction, chunking, indexing, retrieval, session preferences |
+
+### Specialist agents
+
+| Agent | Code path | Function |
+|---|---|---|
+| Strategic Governor | `agents/strategic_governor.py` | Classifies requests and proposes route metadata |
+| Research Scout | `agents/research_scout.py` | Ideation, literature scan, gap analysis, grant opportunity, deep-research bridge |
+| Scientific Verifier | `agents/scientific_verifier.py` | Reviews claims, evidence posture, and verifier routes |
+| Self-Evolution Engine | `agents/self_evolution_engine.py` | Session lessons and proposal generation |
+| Grant Architect | `agents/grant_architect.py` | Reviewer-aware proposal-structure drafting |
+| Teaching Mentor | `agents/teaching_mentor.py` | Teaching materials, quizzes, rubrics, explanations |
+| Lab/Data Analyst | `agents/lab_data_analyst.py` | Analysis plans, checks, plot suggestions, interpretation limits |
+| Public Communication | `agents/influence_public_communication.py` | Public-facing communication drafts with overclaim cautions |
+| Collaboration Operator | `agents/collaboration_operator.py` | Collaboration logic, outreach drafts, agendas, questions |
+| Founder / Innovation | `agents/founder_innovation.py` | Commercialization reflection and validation planning |
+| Patent Intelligence | `agents/patent_intelligence.py` | Stage 1 patent-web reconnaissance and cautious interpretation |
+
+---
+
+## Combined workflow concept
+
+AURA exposes **two connected but distinct execution surfaces**.
+
+### 1. Governed multi-agent orchestration
+
+This is the ordinary AURA pipeline:
 
 ```bash
 python main.py
 ```
 
-### Observed CLI behavior
+or, programmatically:
 
-The CLI:
+```python
+from core.orchestrator import run_aura_core
 
-- asks for a model name and optional API key,
-- uses the model-selection priority from `config.py`,
-- performs a connectivity check,
-- accepts free-form user prompts,
-- supports resumable local-folder prompting through the orchestration loop,
-- and exposes evolution-related commands through the interactive session.
-
-### Conceptual execution path
-
-```mermaid
-flowchart TD
-    A["Prompt"] --> B["Strategic Governor"]
-    B --> C["Specialist selection"]
-    C --> D["Specialist execution"]
-    D --> E["Scientific Verifier"]
-    E --> F{"Verifier route"}
-    F -->|"approve"| G["Persist draft outputs"]
-    F -->|"revise"| H["Revision-oriented retry"]
-    F -->|"retrieve_more_evidence"| I["Evidence-oriented retry"]
-    F -->|"human_review or reject"| J["Fail-closed output posture"]
-    H --> E
-    I --> E
+result = run_aura_core(
+    "Find recent literature on red-NIR OLED emitters, identify a gap, "
+    "and turn it into a cautious grant concept."
+)
 ```
 
-### Outputs
+The orchestrator:
 
-Depending on the route and workflow, the interactive path may produce:
+1. runs the Strategic Governor;
+2. resolves a dependency-aware specialist order;
+3. runs selected specialists;
+4. runs per-specialist verifier passes where the registry requires them;
+5. runs a holistic session-wide verifier;
+6. optionally retries selected failure routes;
+7. combines verifier outcomes conservatively;
+8. gates ordinary draft persistence;
+9. executes or skips self-evolution reflection according to policy.
 
-- terminal-rendered structured results,
-- Markdown draft files under `reports/`,
-- approval-log entries,
-- memory or reflection records under `data/`,
-- self-evolution proposal records awaiting review.
+### 2. Direct deep-research CLI
 
----
-
-## Workflow B — Direct deep research
-
-### Commands
+This path bypasses the multi-agent governor and directly invokes the deep-research subsystem:
 
 ```bash
 python main.py research \
-  --query "Assess evidence gaps in red-NIR OLED degradation mechanisms" \
+  --query "red-NIR OLED emitter degradation mechanisms" \
+  --depth standard
+```
+
+Grant-focused entry point:
+
+```bash
+python main.py research-grants \
+  --query "grant-relevant gaps in red-NIR OLED materials" \
+  --depth extensive
+```
+
+The direct deep-research path generates:
+
+- a research mission object;
+- a search plan;
+- an evidence pack;
+- a verification result;
+- a Markdown report;
+- a reflection artifact;
+- a JSON result printed to the terminal.
+
+The Research Scout can also bridge into the deep-research subsystem through its `deep_research` mode.
+
+---
+
+## Execution ordering and route conservatism
+
+### Canonical specialist order
+
+`core/orchestrator.py` canonicalizes specialists in the following order when they are selected:
+
+```text
+research_scout
+patent_intelligence
+grant_architect
+lab_data_analyst
+teaching_mentor
+influence_public_communication
+collaboration_operator
+founder_innovation
+```
+
+This matters because upstream evidence-producing components should execute before drafting-oriented consumers.
+
+### Evidence-heavy grant safeguard
+
+When a grant-oriented task would otherwise send Research Scout through default `ideation`, the orchestrator can upgrade the scout mode to `literature_scan` for evidence-heavy grant contexts. The code specifically treats grant strategy/proposal workflows and downstream `grant_architect` execution as evidence-sensitive cases.
+
+### Verifier route ordering
+
+The orchestrator treats verifier outcomes conservatively. A worse per-specialist route is not silently overwritten by a more permissive holistic route.
+
+The route priority encoded in `core/orchestrator.py` is:
+
+```text
+reject
+human_review
+retrieve_more_evidence
+revise
+approve
+```
+
+The final stored route is used for persistence and downstream learning gates.
+
+---
+
+## Detailed workflow sections
+
+## Research Scout
+
+**Code:** `agents/research_scout.py`
+
+### Implemented modes
+
+| Mode | Intended use |
+|---|---|
+| `ideation` | Structured exploration of a research direction |
+| `literature_scan` | Query planning, paper discovery, scoring, claim extraction, gap analysis |
+| `gap_analysis` | Follow-up analysis of gap candidates, optionally tied to a matching prior scan session |
+| `grant_opportunity` | Funding-oriented opportunity framing |
+| `deep_research` | Bridge into the direct deep-research subsystem |
+| `paper_intake` | Present in dispatch, implemented as a limited/stub-like path |
+| `trend_monitor` | Present in dispatch, implemented as a limited/stub-like path |
+| `reviewer_attack_scan` | Present in dispatch, implemented as a limited/stub-like path |
+
+### Literature scan inputs and sources
+
+The Research Scout literature workflow integrates with `integrations/research_evolution/paper_sources.py`, which queries:
+
+- OpenAlex
+- arXiv
+- Crossref
+- Semantic Scholar
+- Europe PMC
+
+Optional configuration variables exist for:
+
+- `OPENALEX_API_KEY`
+- `CROSSREF_MAILTO`
+- `SEMANTIC_SCHOLAR_API_KEY`
+
+### Session-aware follow-up behavior
+
+The scout stores scan-session history and attempts to reuse prior scan sessions for follow-up gap/grant workflows only when topic-keyword overlap is sufficient. This avoids attaching unrelated historical scan state indiscriminately.
+
+### Local-folder support
+
+Research Scout can pause and ask whether the user wants to attach a local literature folder. The prompt is returned structurally to the controller; the agent does not call `input()` directly.
+
+---
+
+## Direct deep research
+
+**Code:** `qwen_evolver/deep_research/`
+
+### CLI commands
+
+```bash
+python main.py research \
+  --query "red-NIR TADF OLED photophysics" \
   --depth rapid
 ```
 
 ```bash
-python main.py research \
-  --query "Assess evidence gaps in red-NIR OLED degradation mechanisms" \
-  --depth standard
-```
-
-```bash
 python main.py research-grants \
-  --query "Frame a grant-relevant evidence map for red-NIR OLED stability" \
+  --query "fundable questions in red-NIR OLED stability" \
   --depth extensive
 ```
 
-### Supported depth values
+Supported depths:
 
-| Depth | Default max rounds | Default max queries | Default max sources |
-|---|---:|---:|---:|
-| `rapid` | 1 | 5 | 5 |
-| `standard` | 2 | 15 | 15 |
-| `extensive` | 4 | 30 | 30 |
+| Depth | Default round/query/source budgets |
+|---|---|
+| `rapid` | 1 round, 5 queries, 5 sources |
+| `standard` | 2 rounds, 15 queries, 15 sources |
+| `extensive` | 4 rounds, 30 queries, 30 sources |
 
-Environment overrides implemented in the deep-research orchestrator include:
+The defaults may be overridden with:
 
-```bash
-AURA_RESEARCH_MAX_ROUNDS=3
-AURA_RESEARCH_MAX_QUERIES=20
-AURA_RESEARCH_MAX_SOURCES=25
+```text
+AURA_RESEARCH_MAX_ROUNDS
+AURA_RESEARCH_MAX_QUERIES
+AURA_RESEARCH_MAX_SOURCES
 ```
+
+### Workflow
+
+```mermaid
+flowchart LR
+    A["Research mission"] --> B["Plan queries"]
+    B --> C["Search provider<br/>SearXNG or explicit mock"]
+    C --> D["Fetch source text"]
+    D --> E["Extract evidence claims"]
+    E --> F["Persist evidence pack"]
+    F --> G["Gap analysis"]
+    G -->|follow-up queries| C
+    G -->|stop| H["Verify evidence"]
+    H --> I["Build report"]
+    I --> J["Save Markdown report"]
+    H --> K["Save reflection"]
+```
+
+### Search-provider honesty
+
+`_resolve_provider()` selects:
+
+1. **SearXNG**, when enabled and available;
+2. **MockSearchProvider**, when SearXNG is disabled or unavailable.
+
+Mock-mode reports are visibly warned. The returned result also records:
+
+- `mock_mode_used`
+- `provider_label`
+- `provider_warnings`
+
+This prevents synthetic search runs from being represented as real web retrieval.
 
 ### Outputs
 
-The deep-research package persists:
+Direct deep research writes:
 
-| Artifact | Purpose |
+| Artifact | Path pattern |
 |---|---|
-| `reports/deep_research/` | Markdown mission reports |
-| `data/deep_research/evidence/` | Evidence-pack JSONL snapshots |
-| `data/deep_research/reflections/` | Reflection JSON outputs |
-| `data/deep_research/sources/` | Retrieved source-text cache, where created |
+| Markdown report | `reports/deep_research/<mission_id>_report.md` |
+| Evidence pack | `data/deep_research/evidence/<mission_id>_evidence.jsonl` |
+| Reflection | `data/deep_research/reflections/<mission_id>_reflection.json` |
 
-### Artifact inspection commands
+CLI inspection commands:
 
 ```bash
 python main.py show-report --mission-id <MISSION_ID>
@@ -352,103 +437,197 @@ python main.py show-reflection --mission-id <MISSION_ID>
 
 ---
 
-## Workflow C — Research evolution and literature support
+## Grant Architect
 
-The `integrations/research_evolution/` package implements profile- and literature-oriented support utilities. Its codebase includes:
+**Code:** `agents/grant_architect.py`
 
-- research profile handling,
-- paper-source integrations,
-- paper scoring,
-- literature memory,
-- gap analysis,
-- profile evolution,
-- and reporting helpers.
+### Function
 
-`integrations/research_evolution/paper_sources.py` directly exposes source access utilities for OpenAlex and arXiv, while configuration also provides environment variables for Crossref and Semantic Scholar integrations used elsewhere in the repository.
+Produces reviewer-aware **proposal structures** from a user request and available context.
 
-Outputs and persistence may involve:
+### Draft writer fields
 
-- the research profile YAML file,
-- literature-memory storage,
-- and generated reports, depending on the calling workflow.
+`core/draft_writer.py` renders sections such as:
 
----
+- possible title;
+- grant readiness and confidence metadata;
+- summary;
+- problem statement;
+- central hypothesis;
+- objectives;
+- work packages;
+- methodology overview;
+- expected outcomes;
+- timeline;
+- indicative budget;
+- team roles;
+- reviewer attack points;
+- evidence needed before submission;
+- risk mitigation;
+- collaborator needs;
+- assumptions;
+- references used when present.
 
-## Workflow D — Local document ingestion
+### Boundary
 
-The `core/local_documents/` package provides optional user-supplied evidence ingestion.
-
-### Implemented stages
-
-| Stage | Implementation |
-|---|---|
-| Discovery | Folder scanning and document discovery |
-| Extraction | PDF, DOCX, and plain-text extraction utilities |
-| Chunking | Chunk construction for retrieval |
-| Indexing | Session-scoped index utilities |
-| Retrieval | Keyword-overlap retrieval over indexed chunks |
-| Preferences | Session-level local-document prompting preferences |
-| Pipeline | End-to-end local-document ingestion orchestration |
-
-### Interpretation discipline
-
-Local documents are best described as:
-
-- user-supplied context,
-- extracted and indexed by the system,
-- retrievable within the active workflow,
-- and not independently validated external literature.
-
-### OCR
-
-The environment declares optional OCR-related dependencies:
-
-- `pytesseract`
-- `Pillow`
-- `PyMuPDF`
-
-The comments in `environment.yml` state that OCR requires a separately installed system `tesseract` binary and is enabled at runtime through:
-
-```bash
-AURA_LOCAL_PDF_OCR=1
-```
+This agent drafts proposal logic. It does not submit grants, commit institutional resources, or validate funder compliance.
 
 ---
 
-## Workflow E — Patent web reconnaissance
+## Teaching Mentor
 
-Patent Intelligence is explicitly presented in code as a **Stage 1** workflow.
+**Code:** `agents/teaching_mentor.py`
 
-### Implemented stages
+### Function
 
-```mermaid
-flowchart LR
-    A["User topic"] --> B["Patent query planner"]
-    B --> C["SearXNG-oriented patent search"]
-    C --> D["Landing-page fetch"]
-    D --> E["Metadata extraction"]
-    E --> F["Evidence record construction"]
-    F --> G["Deduplication"]
-    G --> H["PatentWebSearchRun<br/>records, counters, errors, flags"]
-```
+Converts scientific content into structured teaching-oriented materials.
 
-### Constraints encoded in the repository
+### Draft writer fields
 
-The patent agent and integration code explicitly state that this workflow is:
+- target audience;
+- learner level;
+- learning outcomes;
+- conceptual explanation;
+- Socratic questions;
+- common misconceptions;
+- quiz questions;
+- assessment rubric;
+- teaching activity;
+- technical cautions.
 
-- not comprehensive,
-- not a formal prior-art search,
-- not a freedom-to-operate analysis,
-- and not legal advice.
+### Boundary
 
-Evidence records carry Stage 1 honesty flags such as:
+The workflow produces teaching drafts; it is not a validated educational evaluation framework.
 
-- `web_extracted=True`
-- `not_api_verified=True`
+---
+
+## Lab/Data Analyst
+
+**Code:** `agents/lab_data_analyst.py`
+
+### Function
+
+Produces an **analysis plan** and scientific interpretation cautions.
+
+### Draft writer fields
+
+- analysis type;
+- data requirements;
+- required columns;
+- recommended methods;
+- recommended calculations;
+- recommended plots;
+- data-quality checks;
+- reproducibility checks;
+- interpretation limits;
+- safe file handling;
+- next analysis steps;
+- assumptions;
+- risks.
+
+### Boundary
+
+The agent is planning-oriented. The registry description and draft writer are aligned with read-only, non-destructive analytical preparation rather than arbitrary dataset modification or fully automated analysis execution.
+
+---
+
+## Public Communication
+
+**Code:** `agents/influence_public_communication.py`
+
+### Function
+
+Prepares public-facing scientific communication drafts with caution around overclaiming.
+
+### Draft writer fields
+
+- audience;
+- communication goal;
+- core message;
+- hook options;
+- LinkedIn draft;
+- public explanation;
+- narrative angle;
+- evidence cautions;
+- overclaim risks;
+- safer wording.
+
+### Boundary
+
+The rendered Markdown explicitly states that publishing requires approval. The repository drafts content; it does not publish it.
+
+---
+
+## Collaboration Operator
+
+**Code:** `agents/collaboration_operator.py`
+
+### Function
+
+Prepares collaboration logic and outreach drafts.
+
+### Draft writer fields
+
+- collaboration goal;
+- suggested collaboration type;
+- possible collaborators;
+- collaborator rationale;
+- evidence for fit;
+- missing information;
+- draft email subject/body;
+- meeting agenda;
+- questions to ask;
+- institutional risk notes.
+
+### Boundary
+
+The rendered Markdown explicitly states that contacting others requires approval. The code drafts outreach; it does not send email or schedule meetings.
+
+---
+
+## Founder / Innovation
+
+**Code:** `agents/founder_innovation.py`
+
+### Function
+
+Produces commercialization-oriented reflection and validation planning.
+
+### Draft writer fields
+
+- summary;
+- innovation thesis;
+- product hypothesis;
+- target users/customers;
+- problem–customer fit;
+- possible value proposition;
+- technical moat;
+- IP considerations;
+- market assumptions;
+- commercialization pathways;
+- validation experiments;
+- business-model options;
+- key risks;
+- regulatory or ethical considerations;
+- next 90-day plan.
+
+### Boundary
+
+The draft writer supports a legal/financial disclaimer field, and policy rules separately classify high-consequence actions. This workflow should be interpreted as structured strategic analysis, not legal, investment, or IP advice.
+
+---
+
+## Patent Intelligence
+
+**Code:** `agents/patent_intelligence.py`, `integrations/patent_web/`
+
+### Function
+
+Runs **Stage 1 patent-web reconnaissance**. It uses SearXNG-backed search to discover publicly indexed patent landing pages, fetches allowed pages, extracts metadata/evidence summaries, and produces a cautious structured analysis.
 
 ### Default allowed domains
 
-`config.py` defaults to:
+Configured in `config.py` and `.env.example`:
 
 ```text
 patents.google.com
@@ -456,194 +635,302 @@ patentscope.wipo.int
 uspto.gov
 ```
 
+### Configurable patent-web budget
+
+```text
+PATENT_WEB_QUERY_COUNT
+PATENT_WEB_MAX_RESULTS_PER_QUERY
+PATENT_WEB_MAX_PAGES_TO_FETCH
+PATENT_WEB_FETCH_TIMEOUT_SECONDS
+PATENT_WEB_MAX_RESPONSE_BYTES
+PATENT_WEB_ALLOWED_DOMAINS
+PATENT_WEB_ALLOW_MOCK_FALLBACK
+```
+
+### Evidence-level conservatism
+
+The code classifies Stage 1 evidence conservatively:
+
+- `low` for mock use, sparse usable records, or weak extraction;
+- `moderate` only when several real records are available with better extraction;
+- `strong` is not assigned by the Stage 1 classifier.
+
+### Boundary
+
+Patent Intelligence is explicitly:
+
+- web-extracted;
+- not API-verified;
+- non-exhaustive;
+- not legal advice;
+- not a freedom-to-operate analysis.
+
 ---
 
-## Workflow F — Self-evolution review
+## Local-document ingestion
 
-AURA can generate reflection records and governed profile-update proposals. The repository does **not** silently apply such changes.
+**Code:** `core/local_documents/`
 
-### Review command
+### Supported first-class formats
+
+```text
+.pdf
+.docx
+.txt
+.md
+```
+
+### Recognized but unsupported legacy formats
+
+```text
+.doc
+.rtf
+.odt
+```
+
+These formats are surfaced in discovery summaries as legacy/unsupported rather than quietly treated as successful inputs.
+
+### Discovery safeguards
+
+The folder scanner:
+
+- validates the selected path;
+- defaults to recursive scanning;
+- skips symlinks by default;
+- rejects paths that escape the chosen folder through symlink resolution;
+- applies file-count, per-file size, and total-batch size caps;
+- records truncated scans and best-effort omitted counts.
+
+Default caps in code:
+
+| Setting | Default |
+|---|---|
+| `AURA_LOCAL_FOLDER_MAX_FILES` | `200` |
+| `AURA_LOCAL_FOLDER_MAX_FILE_BYTES` | `20,000,000` bytes |
+| `AURA_LOCAL_FOLDER_MAX_TOTAL_BYTES` | `200,000,000` bytes |
+
+### PDF extraction
+
+The PDF pipeline attempts:
+
+1. `pypdf`;
+2. PyMuPDF / `fitz`;
+3. optional OCR, when enabled.
+
+OCR is controlled by:
+
+```text
+AURA_LOCAL_PDF_OCR=1
+```
+
+and requires both Python packages and a separately installed system `tesseract` executable.
+
+### Local evidence provenance
+
+Local chunks preserve metadata such as:
+
+- source type;
+- document identifier;
+- file name;
+- safe reference;
+- page/paragraph location hints where available;
+- content fingerprints;
+- extraction-quality hints.
+
+The code explicitly warns downstream consumers not to inflate confidence merely because local documents exist.
+
+---
+
+## Scientific verification, retry, and persistence
+
+### Verifier passes
+
+The system can run:
+
+1. **per-specialist verifier passes** for agents whose registry entry declares `requires_verification=True`;
+2. a **holistic session-wide verifier** over the assembled output.
+
+### Route-aware retry logic
+
+When enabled by configuration, retry behavior can respond to verifier states such as:
+
+- `retrieve_more_evidence`;
+- `revise`.
+
+Retry strategy names in the code include literature retrieval and revision-with-instructions behavior. The final combined verifier route, not merely an intermediate verdict, is used for persistence decisions.
+
+### Safe persistence routes
+
+Ordinary specialist drafts are persisted only when the final verifier result:
+
+- is a dictionary;
+- is not marked failed;
+- has a route in:
+
+```text
+approve
+revise
+```
+
+### Unverified drafts
+
+For other non-failed verifier routes, the draft writer may save visibly segregated outputs under:
+
+```text
+reports/pending_review/
+```
+
+These files are labelled as unverified and do not relax the ordinary safe-persistence contract.
+
+### Report families persisted by `core/draft_writer.py`
+
+| Specialist | Markdown output |
+|---|---|
+| `grant_architect` | Grant Architect draft |
+| `teaching_mentor` | Teaching Mentor draft |
+| `lab_data_analyst` | Lab/Data Analyst plan |
+| `influence_public_communication` | Public Communication draft |
+| `collaboration_operator` | Collaboration Outreach draft |
+| `founder_innovation` | Founder / Innovation analysis |
+| `patent_intelligence` | Patent Intelligence report |
+
+Research Scout weekly briefs are handled separately within its own workflow.
+
+---
+
+## Approval and action policy
+
+**Code:** `core/permissions.py`
+
+AURA includes an explicit action-policy map with three outcomes:
+
+| Policy | Meaning |
+|---|---|
+| `auto` | May be surfaced or used without a separate approval step |
+| `approval_required` | Requires explicit approval before any execution |
+| `never` | Refused regardless of approval |
+
+Examples encoded in the policy:
+
+| Action class | Policy |
+|---|---|
+| `draft_text`, `draft_email`, `draft_proposal` | `auto` |
+| `send_email`, `publish_content`, `submit_grant`, `share_data_externally` | `approval_required` |
+| `file_patent`, `sign_agreement`, `represent_user_legally`, `execute_trade` | `never` |
+
+Unknown action classes default to `approval_required`, which is the conservative failure mode.
+
+Approval-relevant events are logged to:
+
+```text
+data/approval_log.jsonl
+```
+
+---
+
+## Self-Evolution and review
+
+### Implemented behavior
+
+The Self-Evolution Engine can record:
+
+- session lessons;
+- what worked;
+- weak or failed aspects;
+- memory update proposals;
+- workflow improvement proposals;
+- profile update proposals;
+- experiments or next-step suggestions.
+
+### Review CLI
+
+```bash
+python scripts/approve_evolution.py --list
+```
 
 ```bash
 python scripts/approve_evolution.py
 ```
 
-### Common variants
-
 ```bash
-python scripts/approve_evolution.py --list
 python scripts/approve_evolution.py --auto-skip
 ```
 
-### Relevant artifacts
+The same review surface can be entered from the interactive CLI with commands such as:
 
-| Artifact | Role |
-|---|---|
-| `data/reflections.jsonl` | Reflection records and proposed evolution artifacts |
-| `data/approval_log.jsonl` | Approval-related decision trail |
-| `profiles/research_profile.yaml` | Profile state that may be affected by approved proposals |
-
----
-
-# Confidence and decision logic
-
-## Verifier routes
-
-The codebase uses a route vocabulary that includes:
-
-- `approve`
-- `revise`
-- `retrieve_more_evidence`
-- `human_review`
-- `reject`
-
-These routes influence retry behavior and whether draft outputs are persisted.
-
-## Retry controls
-
-The orchestration layer refers to environment-driven retry behavior, including variables such as:
-
-```bash
-AURA_AUTO_RETRIEVE_EVIDENCE=1
-AURA_MAX_RETRIES=5
-AURA_MAX_REVISE_ITERATIONS=4
+```text
+evolve
+approve evolution
+pending
 ```
 
-These support bounded iterative recovery rather than unconstrained looping.
+### Review boundary
 
-## Patent evidence quality
-
-`agents/patent_intelligence.py` documents patent evidence logic in which:
-
-- `low` quality can reflect mock mode, too few usable records, or mostly low-quality extraction,
-- `moderate` quality reflects multiple real pages with several medium/high extractions,
-- `strong` is intentionally not used at Stage 1.
-
-## Mock-provider caution
-
-The deep-research orchestrator and patent-web pathway explicitly distinguish real providers from mock fallback behavior. Mock results should be interpreted as synthetic workflow outputs, not real external evidence.
+The review utility logs decisions and tracks proposal content hashes. It is a controlled review path, not a silent self-modification mechanism.
 
 ---
 
-# Full repository layout
+## Suggested repository layout
 
-The following layout lists all Python source files contained in the supplied repository archive, including Python modules nested inside subfolders. Generated cache files are omitted.
+The archive already uses a coherent research-software layout:
 
 ```text
 .
-├── agents
-│   ├── __init__.py
-│   ├── collaboration_operator.py
-│   ├── founder_innovation.py
-│   ├── grant_architect.py
-│   ├── influence_public_communication.py
-│   ├── lab_data_analyst.py
-│   ├── patent_intelligence.py
-│   ├── research_scout.py
-│   ├── scientific_verifier.py
-│   ├── self_evolution_engine.py
-│   ├── strategic_governor.py
-│   └── teaching_mentor.py
-├── core
-│   ├── local_documents
-│   │   ├── __init__.py
-│   │   ├── chunking.py
-│   │   ├── convert_legacy_docs.py
-│   │   ├── discovery.py
-│   │   ├── extract_docx.py
-│   │   ├── extract_pdf.py
-│   │   ├── extract_text.py
-│   │   ├── indexing.py
-│   │   ├── models.py
-│   │   ├── pipeline.py
-│   │   ├── retrieval.py
-│   │   └── session_preferences.py
-│   ├── __init__.py
-│   ├── draft_writer.py
-│   ├── evolution_review.py
-│   ├── formatter.py
-│   ├── llm.py
-│   ├── memory.py
-│   ├── normalization.py
-│   ├── orchestrator.py
-│   ├── permissions.py
-│   ├── registry.py
-│   ├── runtime.py
-│   ├── schemas.py
-│   └── searxng_runtime.py
-├── integrations
-│   ├── patent_web
-│   │   ├── __init__.py
-│   │   ├── dedup.py
-│   │   ├── evidence_builder.py
-│   │   ├── extractor.py
-│   │   ├── normalizer.py
-│   │   ├── page_fetcher.py
-│   │   ├── pipeline.py
-│   │   ├── query_planner.py
-│   │   ├── schemas.py
-│   │   └── search.py
-│   ├── research_evolution
-│   │   ├── __init__.py
-│   │   ├── gap_analysis.py
-│   │   ├── literature_memory.py
-│   │   ├── paper_scoring.py
-│   │   ├── paper_sources.py
-│   │   ├── profile.py
-│   │   ├── profile_evolution.py
-│   │   ├── reports.py
-│   │   └── schemas.py
-│   └── __init__.py
-├── qwen_evolver
-│   └── deep_research
-│       ├── __init__.py
-│       ├── citation_manager.py
-│       ├── evidence_extractor.py
-│       ├── evidence_store.py
-│       ├── gap_analyzer.py
-│       ├── orchestrator.py
-│       ├── planner.py
-│       ├── report_builder.py
-│       ├── research_logger.py
-│       ├── schemas.py
-│       ├── search_providers.py
-│       ├── source_reader.py
-│       └── verifier_bridge.py
-├── scripts
-│   ├── approve_evolution.py
-│   ├── diagnose_wave2.py
-│   ├── diagnose_wave3.py
-│   ├── live_validate_core.py
-│   └── setup_searxng_windows.py
+├── main.py
+├── config.py
 ├── .env.example
+├── environment.yml
+│
+├── agents/
+├── core/
+│   └── local_documents/
+├── integrations/
+│   ├── patent_web/
+│   └── research_evolution/
+├── qwen_evolver/
+│   └── deep_research/
+├── deployment/
+│   └── searxng/
+├── profiles/
+├── data/
+├── reports/
+├── outputs/
+├── scripts/
+│
 ├── _demo_pipelines.py
 ├── _diagnose_governor.py
 ├── _diagnose_llm.py
-├── _e2e_test.py
-├── config.py
-├── environment.yml
-└── main.py
+└── _e2e_test.py
 ```
+
+For a public release, consider whether generated reports, backup profile snapshots, and live data artifacts should remain as curated examples, move into an `examples/` folder, or be excluded from the distributable repository.
 
 ---
 
-# Suggested software environment
+## Suggested software environment
 
-The repository ships `environment.yml` with:
+### Conda setup
 
-### Conda dependencies
+```bash
+conda env create -f environment.yml
+conda activate aura
+```
 
-- Python 3.11
-- NumPy
-- pandas
-- Pydantic
-- python-dotenv
-- Rich
-- pytest
-- requests
-- PyYAML
+### Dependencies declared in `environment.yml`
 
-### Pip dependencies
+Conda dependencies include:
+
+- Python `3.11`
+- `numpy`
+- `pandas`
+- `pydantic`
+- `python-dotenv`
+- `rich`
+- `pytest`
+- `requests`
+- `pyyaml`
+
+Pip-installed dependencies include:
 
 - `ollama`
 - `beautifulsoup4`
@@ -653,97 +940,80 @@ The repository ships `environment.yml` with:
 - `Pillow`
 - `pymupdf`
 
-### Environment creation
+### External executables and services
+
+| External component | Used for |
+|---|---|
+| Ollama | Local LLM execution for model names containing `:` |
+| Docker / Docker Compose | Local SearXNG deployment |
+| Tesseract binary | Optional OCR for scanned/image-only PDFs |
+| SearXNG instance | Real web search for deep research and patent-web discovery |
+
+---
+
+## Quick start
+
+### 1. Create the environment
 
 ```bash
 conda env create -f environment.yml
 conda activate aura
 ```
 
-### Configuration bootstrap
+### 2. Configure environment variables
 
 ```bash
 cp .env.example .env
 ```
 
-On Windows PowerShell, use an equivalent copy command such as:
+Representative settings:
 
-```powershell
-Copy-Item .env.example .env
-```
-
----
-
-# Runtime configuration
-
-## Model resolution
-
-`config.py` resolves the active model name in this priority order:
-
-1. `LLM_MODEL`
-2. `AURA_MODEL`
-3. `AURA_DEFAULT_MODEL`
-4. built-in fallback `deepseek-v4-flash`
-
-Example:
-
-```bash
+```dotenv
 AURA_MODEL=qwen3:8b
-```
-
-or:
-
-```bash
-LLM_MODEL=deepseek-v4-flash
-LLM_API_KEY=...
-```
-
-## Selected core settings
-
-```bash
 AURA_TEMPERATURE=0.2
 AURA_NUM_CTX=8192
 AURA_KEEP_ALIVE=30m
 ```
 
-## Search and patent reconnaissance
+Remote/OpenAI-compatible model usage is also supported through environment variables such as:
 
-```bash
-SEARXNG_ENABLED=1
-SEARXNG_URL=http://localhost:8080
-
-PATENT_WEB_SEARCH_ENABLED=1
-PATENT_WEB_SEARCH_PROVIDER=auto
-PATENT_WEB_ALLOWED_DOMAINS=patents.google.com,patentscope.wipo.int,uspto.gov
+```dotenv
+LLM_API_KEY=your_api_key_here
 ```
 
----
-
-# Quick start commands
-
-## Run the interactive assistant
+### 3. Start the interactive assistant
 
 ```bash
 python main.py
 ```
 
-## Run deep research
+The terminal loop supports:
+
+```text
+<any prompt>       run a research task through AURA
+evolve             review pending self-evolution proposals
+json               print the last raw AURA result
+help               print command help
+exit / quit        stop the session
+```
+
+### 4. Run direct deep research
 
 ```bash
 python main.py research \
-  --query "Identify evidence gaps in red-NIR TADF OLED emitters" \
+  --query "red-NIR OLED emitter degradation mechanisms" \
   --depth standard
 ```
 
-## Run grant-oriented deep research
+### 5. Run grant-focused deep research
 
 ```bash
 python main.py research-grants \
-  --query "Develop a grant-facing evidence map for red-NIR OLED stability" \
+  --query "grant-relevant gaps in red-NIR OLED stability" \
   --depth extensive
 ```
 
-## Show persisted deep-research artifacts
+### 6. Inspect a prior direct deep-research artifact
 
 ```bash
 python main.py show-report --mission-id <MISSION_ID>
@@ -751,128 +1021,182 @@ python main.py show-evidence --mission-id <MISSION_ID>
 python main.py show-reflection --mission-id <MISSION_ID>
 ```
 
-## Review self-evolution proposals
+---
 
-```bash
-python scripts/approve_evolution.py --list
+## Using SearXNG for real web search
+
+### Configure `.env`
+
+```dotenv
+SEARXNG_ENABLED=1
+SEARXNG_URL=http://localhost:8080
+SEARXNG_AUTO_START=1
 ```
 
----
+### Start the provided Docker Compose deployment
 
-# How to use the workflows together
+```bash
+docker compose -f deployment/searxng/docker-compose.yml up -d
+```
 
-A conservative publication-oriented usage pattern is:
-
-1. Run interactive AURA for routed multi-agent assistance.
-2. Use direct deep research when a source-oriented mission and persisted evidence trail are required.
-3. Enable SearXNG when real web-search evidence is needed.
-4. Use local-document ingestion only when user-supplied evidence should be considered as contextual input.
-5. Treat patent-web results as preliminary reconnaissance, not legal conclusions.
-6. Inspect verifier routes, draft reports, evidence logs, and approval records before relying on outputs.
-7. Review self-evolution proposals manually before accepting any profile updates.
+The `.env.example` notes that JSON output must be enabled in SearXNG settings for the implemented client behavior.
 
 ---
 
-# Reproducibility notes
+## How to use workflows together
 
-The repository improves inspectability through:
+### Example A: literature → grant framing
 
-- explicit configuration files,
-- typed schemas,
-- JSONL evidence and reflection persistence,
-- structured Markdown reporting,
-- SQLite-backed or file-backed research state where used,
-- and environment-controlled retry/search behavior.
+Interactive prompt:
 
-Exact reproducibility is still limited by:
+```text
+Find recent literature on red-NIR OLED emitters, identify a defensible gap,
+and turn it into a cautious grant concept.
+```
 
-- nondeterministic language-model outputs,
-- live web-search variability,
-- changing source pages,
-- local SearXNG configuration,
-- third-party scholarly-source availability,
-- and local document extraction quality.
+A plausible governed route is:
 
-For manuscript-facing use, record:
+```text
+research_scout → grant_architect → scientific verification → optional reflection
+```
 
-- repository commit or archived release,
-- model identifier,
-- `.env` settings,
-- SearXNG configuration,
-- date of execution,
-- profile-file state,
-- and generated reports/evidence files.
+The exact governor route remains runtime/model dependent.
+
+### Example B: literature → communication draft
+
+```text
+Summarize a recent OLED research direction and produce a cautious public-facing explanation without overstating certainty.
+```
+
+A plausible route is:
+
+```text
+research_scout → influence_public_communication → scientific verification
+```
+
+### Example C: patent-web reconnaissance → commercialization reflection
+
+```text
+Map the preliminary patent-web landscape around a proposed OLED emitter direction and discuss commercialization implications cautiously.
+```
+
+A plausible route is:
+
+```text
+patent_intelligence → founder_innovation → scientific verification
+```
+
+The first stage remains preliminary web reconnaissance, not legal analysis.
+
+### Example D: local literature context
+
+When selected workflows need local context, the interactive prompt loop can pause to ask whether to ingest a local folder. The resumed run preserves a session identifier and passes structured user responses back into the orchestration layer.
 
 ---
 
-# Methodological contribution / interpretation
+## Reproducibility notes
 
-AURA is most appropriately interpreted as a **governed AI research workflow prototype**. Its methodological value lies in combining:
+The repository includes several reproducibility-oriented design choices:
 
-- specialist routing,
-- evidence-aware verification,
-- conservative persistence gates,
-- bounded retry logic,
-- provenance-conscious local-document ingestion,
-- explicit mock-mode honesty,
-- and review-before-application self-evolution.
+- structured schemas for LLM-facing outputs;
+- timestamped and path-stable report writing conventions;
+- stored deep-research evidence packs and reflections;
+- explicit provider warnings and mock-mode flags;
+- approval-event logging;
+- session identifiers for paused/resumed local-folder workflows;
+- explicit verifier routes and final persistence decisions.
 
-This architecture is useful for studying how research assistants can become more inspectable and less likely to overstate their autonomy.
+Exact output reproduction still requires documenting:
+
+- repository revision;
+- selected model name;
+- local vs remote LLM mode;
+- temperature and context configuration;
+- SearXNG availability/configuration;
+- external scholarly-source availability;
+- deep-research depth and budget overrides;
+- contents of any user-provided local document folders.
 
 ---
 
-# Example citation block
+## Methodological contribution / interpretation
+
+AURA’s strongest methodological contribution is its **governed research-assistance pattern**, not any single generated draft.
+
+The code demonstrates:
+
+1. routing logic separated from drafting logic;
+2. dependency-aware specialist ordering;
+3. verifier-aware persistence gates;
+4. explicit fail-closed behavior around uncertain routes;
+5. action-policy classification for external or high-consequence actions;
+6. local-document retrieval with provenance and quality hints;
+7. mock-search disclosure rather than silent fallback;
+8. self-evolution proposals that remain reviewable.
+
+These design choices are especially relevant for research software that aims to support exploration while preserving interpretive caution.
+
+---
+
+## Example citation block
 
 ```bibtex
-@software{aura_research_workflows,
-  title        = {AURA: Governed Multi-Agent Research Assistance and Evidence-Aware Workflow Prototyping},
-  author       = {Repository Maintainer},
+@software{aura_research_assistant,
+  title        = {AURA: A Governed Multi-Agent Research Assistance Framework},
+  author       = {Repository maintainers},
   year         = {2026},
-  url          = {Repository URL},
-  note         = {Research software prototype; cite the archived release or exact commit used in analysis.}
+  version      = {research prototype},
+  url          = {repository URL},
+  note         = {Cite the repository revision used in the reported workflow.}
 }
 ```
 
 ---
 
-# Recommended additions for publication readiness
+## Recommended additions for publication readiness
 
-The following are recommended future additions, not confirmed current repository features:
+The codebase is substantial, but a manuscript-companion release would be stronger with:
 
-- a `CITATION.cff` file,
-- a manuscript-linked release tag,
-- CI that separates deterministic tests from live LLM diagnostics,
-- sanitized example outputs under an examples directory,
-- a consolidated environment-variable reference table,
-- reproducibility notes tied to specific paper experiments,
-- and a more formal validation protocol for routed outputs and verifier behavior.
-
----
-
-# Limitations
-
-- The system relies on LLM-generated content and requires expert review.
-- The Scientific Verifier is a structured critic, not a factual guarantee.
-- Deep research depends on live or mock search behavior and source availability.
-- Patent Intelligence is Stage 1 reconnaissance only.
-- Local retrieval is not described as a semantic vector search system in the inspected code.
-- OCR support is optional and requires an external system binary.
-- Some Research Scout modes are explicitly marked as stubs in code and should not be presented as complete production workflows.
-- Diagnostic scripts are useful engineering checks, not comprehensive benchmark suites.
+1. a top-level license file;
+2. `CITATION.cff`;
+3. a release tag and versioning policy;
+4. a formal `tests/` tree separated from live diagnostics;
+5. deterministic mocked smoke tests for routing, persistence, and approval gating;
+6. curated example inputs and expected-output snapshots;
+7. a concise architecture figure exported for papers/slides;
+8. a reproducibility manifest template;
+9. `CONTRIBUTING.md` and `SECURITY.md`;
+10. a policy for generated reports, profile backups, and live data artifacts included in the repository snapshot.
 
 ---
 
-# Acknowledgments
+## Limitations
 
-This repository brings together ideas from governed agent orchestration, evidence-aware research assistance, scholarly source retrieval, patent-page reconnaissance, local-document processing, and human-in-the-loop adaptation.
+- The Scientific Verifier is a software verification layer, not an external ground-truth oracle.
+- Model outputs remain model-dependent and require expert review.
+- Live web search can be unavailable, sparse, or noisy.
+- Mock search results are synthetic and must not be interpreted as real retrieval evidence.
+- Local-document extraction can be partial or poor, especially for scanned PDFs or unsupported formats.
+- The Lab/Data Analyst plans analyses rather than running a complete scientific computation pipeline.
+- Patent Intelligence is not legal advice and not a formal patent search.
+- Diagnostic scripts should not be mistaken for a validated scientific benchmark suite.
+- The archive snapshot contains generated artifacts and profile backups; public release hygiene may require curation.
 
 ---
 
-# Maintainer note
+## Acknowledgments
 
-Maintain the repository as a truthfully documented scientific software artifact:
+AURA’s implementation reflects an emphasis on:
 
-- keep the README aligned with actual code behavior,
-- preserve the distinction between implemented workflows and future recommendations,
-- retain the explicit caution around mock providers and patent reconnaissance,
-- and version the code carefully when using it alongside a publication.
+- cautious scientific drafting;
+- visible uncertainty;
+- approval-aware action handling;
+- provenance-rich retrieval;
+- verifier-centered orchestration;
+- human-reviewed workflow evolution.
+
+---
+
+## Maintainer note
+
+Present AURA as a **governed research-assistance framework** rather than as an autonomous research replacement. Its publication value lies in the explicit orchestration, verification, persistence, and review mechanisms encoded in the repository—not in unsupported claims of fully automated scientific correctness.

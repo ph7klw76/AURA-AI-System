@@ -942,26 +942,6 @@ _Retrieved by Research Scout via the multi-provider literature scan (OpenAlex ·
 [7] Beyond the visible: metal-ion-doped inorganic UV phosphors for advanced photonics — openalex 2026 · URL: https://doi.org/10.1038/s41377-026-02276-8
 [8] Quantum in Biology, Quantum for Biology, and Biology for Quantum: Mapping the Evidence and the Road Ahead — openalex 2026 · URL: https://arxiv.org/abs/2605.00205
 
-## Local-document evidence used
-
-- **[LOCAL:505372580234]** 505372580234 — _This journal is © The Royal Society of Chemistry and the Chinese Chemical Society 2024 Mater. Chem. Front., 2024, 8, 1731–1766 | 1731 Cite this: Mater. Chem. Front., 202 4, 8, 1731 Recent advances in …_
-- **[LOCAL:505372580234]** 505372580234 — _igidity of their structure as well as admixtures of the 3LC states often lead to a relatively narrowband luminescence with a clearly resolved vibronic structure, a feature of importance for colour pur…_
-- **[LOCAL:505372580234]** 505372580234 — _e. Despite that flaw however, aggregate platinum( II) complexes are among the most efficient NIR emitters known to date. Monomeric complexes The first platinum( II) compounds to give eﬃcient NIR elect…_
-- **[LOCAL:505372580234]** 505372580234 — _TADF core with peripheral donor groups has shown to result in emission tuning. However, when significantly strong donor groups are employed the lowest excited states lose the short- range charge trans…_
-- **[LOCAL:505372580234]** 505372580234 — _twisted carbazole-fused DABNA derivative that displays Zext up to 39% with lEL at 588 nm. The highly twisted structure helped to relieve concentration quenching, allowing the development of devices wi…_
-- **[LOCAL:505372580234]** 505372580234 — _tion coupling due to the shallow potential energy surface induced by the MR eﬀect. The deep red emitters, R-BN and R-TBN, showed high PLQY of 100% and their use in OLEDs resulted inl EL a t6 6 4n ma n…_
-
-## References
-
-[1] High‐Performance Multi‐Resonance Thermally Activated Delayed Fluorescence Emitters for Narrowband Organic Light‐Emitting Diodes — semantic_scholar 2023 · URL: https://www.semanticscholar.org/paper/4c2394c6a6fea33e7a3260aaf250600d27de6780
-[2] Syntheses of multi-resonance frameworks towards narrowband organic light-emitting diodes. — semantic_scholar 2024 · URL: https://www.semanticscholar.org/paper/389efce8904eb75a27eaf3be07bdbba485ca5766
-[3] Spiro-fluorene locked multi-resonance delayed fluorescence helical framework: efficient circularly polarized electroluminescent materials — semantic_scholar 2025 · URL: https://www.semanticscholar.org/paper/5b904e0320711e86ac3e4335f8476829e652f4bb
-[4] Design and synthesis of thermally activated delayed fluorescence emitters for solution-processed organic light-emitting diodes — openalex 2026 · URL: https://hdl.handle.net/10023/33652
-[5] Molcano: Molecular Language for Chemical Assembly Notation — openalex 2026 · URL: https://doi.org/10.1038/s41524-026-02053-6
-[6] Multi-contrast laser endoscopy for in vivo gastrointestinal imaging — openalex 2026 · URL: https://doi.org/10.1038/s44303-026-00161-y
-[7] Beyond the visible: metal-ion-doped inorganic UV phosphors for advanced photonics — openalex 2026 · URL: https://doi.org/10.1038/s41377-026-02276-8
-[8] Quantum in Biology, Quantum for Biology, and Biology for Quantum: Mapping the Evidence and the Road Ahead — openalex 2026 · URL: https://arxiv.org/abs/2605.00205
-
 ---
 ## Session Footer
 **Governor rationale:** User explicitly requests China sub-mode for a rigorous red/NIR MR-TADF OLED proposal with literature survey, requiring research_scout and china_grant_architect to produce the blueprint.

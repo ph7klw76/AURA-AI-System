@@ -1058,3 +1058,8 @@ This repository should be maintained as a research prototype with conservative d
 - externally consequential actions remain human-gated;
 - generated artifacts are separated from source files.
 
+need to add
+https://github.com/connectaman/Pitchlense-mcp?tab=readme-ov-file
+https://github.com/mims-harvard/ToolUniverse
+https://github.com/yycyyv/M-Cube
+https://github.com/jataware/open-coscientist

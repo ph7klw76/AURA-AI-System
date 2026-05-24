@@ -152,7 +152,62 @@ No claim is made that every test passes in the current environment. The archive 
 | `integrations/patent_web/search_providers/` | Search-provider abstraction and implementations for SearXNG, no-key Google-web scraping, DuckDuckGo HTML, and mock mode. |
 | `qwen_evolver/deep_research/` | Direct deep-research subsystem: planning, search, source reading, evidence extraction, gap analysis, verification bridge, report building, rigorous report rendering, and reflection logging. |
 | `core/local_documents/` | Local folder discovery, PDF/DOCX/TXT/Markdown extraction, optional OCR, chunking, in-memory indexing, retrieval, and session preferences. |
+| `core/planning/` | Advisory LLM agent planner — proposes execution plans, validated by safety policy before execution. |
+| `core/task_agents/` | Task-scoped helper agents — narrow, bounded subtasks with verifier-gated outputs. |
 | `deployment/searxng/` | Docker Compose and settings for a local SearXNG instance. |
+
+---
+
+## Advisory LLM Agent Planner
+
+An optional, advisory planner that proposes agent execution plans for tasks
+outside hard-coded routing.  It improves agent selection for mixed, complex,
+or novel requests.
+
+### Core rule
+
+```
+LLM proposes → AURA policy validates → Orchestrator executes → Scientific Verifier judges
+```
+
+The planner is **advisory only** — it never executes agents, calls tools, or
+makes final decisions.
+
+### Configuration
+
+| Variable | Default | Description |
+|---|---|---|
+| `AURA_LLM_PLANNER_ENABLED` | `0` | Enable the LLM planner |
+| `AURA_LLM_PLANNER_ALLOW_EXTERNAL_MCP` | `0` | Allow MCP evidence provider suggestions |
+| `AURA_LLM_PLANNER_ALLOW_TASK_AGENTS` | `0` | Allow task-agent helper suggestions |
+| `AURA_LLM_PLANNER_REQUIRE_VERIFIER` | `1` | Force verifier requirement |
+| `AURA_LLM_PLANNER_REQUIRE_POLICY` | `1` | Require policy validation |
+
+### What the planner may recommend
+- Existing AURA agents (research_scout, grant_architect, etc.)
+- Task-scoped helper agents (if `AURA_LLM_PLANNER_ALLOW_TASK_AGENTS=1`)
+- External MCP evidence providers (if `AURA_LLM_PLANNER_ALLOW_EXTERNAL_MCP=1`)
+- Evidence requirement, risk level, verifier need, human review need
+- Blocked actions
+
+### What the planner may NOT do
+- Execute agents directly
+- Invent unknown agents
+- Disable the Scientific Verifier
+- Approve its own plan or persist drafts
+- Write memory/profile or approve self-evolution
+- Call arbitrary MCP servers or run shell commands
+
+### Safety invariants
+- **Disabled by default** — no behaviour change when off
+- **Advisory only** — LLM proposes, never executes
+- **Unknown agents blocked** — only pre-approved AURA agents allowed
+- **Verifier cannot be disabled** — forced on for scientific/evidence/MCP/task-agent tasks
+- **Governor primacy preserved** — planner adds agents, never removes Governor-selected ones
+- **Fallback on failure** — deterministic keyword-based routing if LLM fails
+- **All events audited** — `data/llm_agent_plans.jsonl` (secrets hashed)
+
+Package: `core/planning/` — standalone, with lazy imports in the orchestrator.
 
 ---
 

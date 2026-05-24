@@ -44,6 +44,135 @@ def _patent_needed(user_input: str) -> bool:
 
 
 # ---------------------------------------------------------------------------
+# Advisory LLM Agent Planner (Stage 2 — orchestrator integration)
+# ---------------------------------------------------------------------------
+# The planner is an OPTIONAL advisory layer.  When AURA_LLM_PLANNER_ENABLED=1
+# the Governor's decision is augmented with an LLM-proposed agent plan that
+# is validated against hard safety policy before any agent executes.
+#
+# LLM proposes → policy validates → orchestrator executes → verifier judges.
+# The planner can ADD agents but NEVER remove Governor-selected agents, and
+# it can NEVER disable verification, weaken safety, or bypass draft persistence.
+
+def _maybe_plan_agents(
+    user_input: str,
+    session_id: str | None,
+    governor_decision: dict,
+    governor_ordered: list[str],
+) -> dict[str, Any]:
+    """Optionally run the LLM Agent Planner to augment agent selection.
+
+    Returns a dict with ``augmented_ordered`` (final agent list) and planner
+    metadata.  When the planner is disabled, fails, or throws an exception,
+    the Governor's original ordered list is returned unchanged.
+    """
+    from core.planning import (
+        propose_agent_plan,
+        validate_agent_plan,
+        safe_fallback_plan,
+        is_planner_enabled,
+    )
+    from core.planning.schemas import PlanningContext
+    from core.planning import audit as plan_audit
+
+    meta: dict[str, Any] = {
+        "enabled": False,
+        "plan_used": False,
+        "fallback_used": False,
+        "selected_agents": list(governor_ordered),
+        "helper_agents": [],
+        "external_mcp": [],
+        "risk_level": None,
+        "requires_verifier": True,
+        "requires_human_review": False,
+        "warnings": [],
+    }
+
+    if not is_planner_enabled():
+        plan_audit.log_planner_disabled(session_id, "AURA_LLM_PLANNER_ENABLED != 1")
+        return {"augmented_ordered": list(governor_ordered), "planner": meta}
+
+    meta["enabled"] = True
+
+    try:
+        # 1. Build context from Governor decision
+        ctx = PlanningContext(
+            user_prompt=user_input,
+            session_id=session_id,
+            governor_decision=governor_decision,
+            risk_hints=[governor_decision.get("risk_level", "low") or "low"],
+            policy_hints=[
+                f"blocked_actions={governor_decision.get('blocked_actions', [])}",
+                f"requires_approval={governor_decision.get('requires_approval', False)}",
+            ],
+        )
+
+        # 2. Propose
+        plan_audit.log_planner_requested(session_id, plan_audit._hash(user_input))
+        raw_plan = propose_agent_plan(ctx)
+        raw_hash = plan_audit._hash(raw_plan.model_dump_json())
+
+        if raw_plan.confidence == "low" and raw_plan.warnings:
+            plan_audit.log_planner_failed(
+                session_id,
+                "; ".join(raw_plan.warnings),
+                raw_plan_hash=raw_hash,
+            )
+
+        # 3. Validate
+        validated = validate_agent_plan(raw_plan, ctx)
+        plan_audit.log_plan_validated(
+            session_id, raw_plan.plan_id, validated.ok,
+            validated.validation_errors, validated.validation_warnings,
+            fallback_used=False,
+        )
+
+        # 4. Fallback if validation failed or confidence too low
+        if not validated.ok or raw_plan.confidence == "low":
+            validated = safe_fallback_plan(user_input, governor_decision=governor_decision)
+            plan_audit.log_fallback_used(
+                session_id,
+                f"Validation ok={validated.ok}, confidence={raw_plan.confidence}",
+                validated.selected_agents,
+            )
+            meta["fallback_used"] = True
+        else:
+            meta["plan_used"] = True
+            plan_audit.log_planner_succeeded(session_id, raw_plan.plan_id, raw_hash, raw_plan)
+    except Exception as exc:
+        # Planner crashed — use deterministic fallback, never break pipeline.
+        plan_audit.log_planner_failed(session_id, str(exc))
+        plan_audit.log_fallback_used(
+            session_id, f"Planner crashed: {exc}", list(governor_ordered),
+        )
+        validated = safe_fallback_plan(user_input, governor_decision=governor_decision)
+        meta["fallback_used"] = True
+        meta["warnings"].append(f"Planner crashed, used fallback: {exc}")
+
+    # 5. Merge: Governor agents + planner agents, preserving Governor primacy
+    #    The planner may ADD agents but NEVER remove Governor-selected agents.
+    merged = dict.fromkeys(governor_ordered)
+    for agent in validated.selected_agents:
+        merged[agent] = None
+    augmented = [a for a in _CANONICAL_AGENT_ORDER if a in merged]
+    # Append any remaining agents the canonical order doesn't know about
+    for a in merged:
+        if a not in augmented:
+            augmented.append(a)
+
+    # 6. Populate metadata
+    meta["selected_agents"] = augmented
+    meta["helper_agents"] = validated.helper_agents
+    meta["external_mcp"] = validated.external_mcp
+    meta["risk_level"] = validated.risk_level
+    meta["requires_verifier"] = validated.requires_verifier
+    meta["requires_human_review"] = validated.requires_human_review
+    meta["warnings"] = validated.validation_warnings
+
+    return {"augmented_ordered": augmented, "planner": meta}
+
+
+# ---------------------------------------------------------------------------
 # Execution-plan resolution
 # ---------------------------------------------------------------------------
 
@@ -1740,6 +1869,25 @@ def run_aura_core(
 
     completed_steps.append("strategic_governor")
     ordered_agents, scout_mode, agent_configs = _resolve_execution_plan(decision)
+
+    # ── Advisory LLM Agent Planner (Stage 2, optional) ────────────────────
+    # The planner augments agent selection — it may ADD agents but NEVER
+    # removes Governor-selected agents.  Disabled by default; non-fatal on
+    # failure.  Planner metadata is recorded in result["llm_agent_planner"].
+    try:
+        planner_result = _maybe_plan_agents(
+            user_input, active_session_id, decision, ordered_agents,
+        )
+        ordered_agents = planner_result["augmented_ordered"]
+        result["llm_agent_planner"] = planner_result["planner"]
+    except Exception as _plan_exc:
+        result["llm_agent_planner"] = {
+            "enabled": False,
+            "error": f"Planner hook failed (non-fatal): {_plan_exc}",
+            "selected_agents": list(ordered_agents),
+            "fallback_used": True,
+        }
+    # ──────────────────────────────────────────────────────────────────────
 
     # Step 4: Specialist loop (canonical order with full inter-agent context)
     for agent_name in ordered_agents:

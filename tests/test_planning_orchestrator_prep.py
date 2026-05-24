@@ -61,18 +61,26 @@ class TestNoOrchestratorInterference:
         assert "planning" not in AGENT_REGISTRY
 
 
-class TestStage1NoOrchestratorIntegration:
-    """Stage 1 must NOT have any orchestrator integration code."""
+class TestStage2OrchestratorIntegration:
+    """Stage 2 — orchestrator has the planner hook."""
 
-    def test_no_planner_in_orchestrator_code(self):
-        """Verify orchestrator.py does not reference the planner."""
+    def test_maybe_plan_agents_exists(self):
+        """Verify orchestrator.py has the planner hook function."""
         with open("core/orchestrator.py") as f:
             text = f.read()
-        assert "maybe_plan_agents" not in text, (
-            "Stage 1 must NOT have orchestrator integration"
+        assert "_maybe_plan_agents" in text, (
+            "Stage 2: orchestrator must have _maybe_plan_agents hook"
         )
-        assert "from core.planning" not in text, (
-            "Stage 1 must NOT import planning in orchestrator"
+
+    def test_planner_not_imported_at_module_level(self):
+        """Planner is imported lazily inside _maybe_plan_agents, not at top-level."""
+        with open("core/orchestrator.py") as f:
+            text = f.read()
+        lines = text.split("\n")
+        # Check top-level imports (first 30 lines)
+        top_imports = "\n".join(lines[:30])
+        assert "from core.planning" not in top_imports, (
+            "Planner must be imported lazily, not at module level"
         )
 
     def test_planner_works_standalone(self):

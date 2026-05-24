@@ -1,0 +1,71 @@
+research_topics:
+- OLED
+- TADF
+- organic semiconductor
+- red-NIR emission
+- lanthanide complex
+- exciplex system
+- charge transport
+- molecular vibration
+- device degradation
+- machine learning materials discovery
+- quantum chemistry
+- organic_light_emitting_diodes
+- oled_materials
+- red-NIR_TADF_OLEDs
+- lanthanide complexes
+- hybrid system validation
+- red-NIR OLED
+- TADF materials
+- device performance metrics
+- organic electronics
+- optoelectronics
+- red-NIR TADF OLEDs
+- TADF OLED efficiency metrics
+- Organic electronics
+- OLED materials
+- TADF mechanisms
+- grant management
+- collaboration protocols
+- policy-compliant workflows
+- red-NIR OLED materials
+- TADF-lanthanide hybrids
+- photobiomodulation
+- OLED technology
+- patent strategy
+- venture capital
+- computational energy modeling
+- TADF OLEDs
+- material property variability
+- OLED data analysis with verification protocols
+- grant strategy frameworks
+scoring_weights:
+  relevance: 0.3
+  novelty: 0.22
+  grant_potential: 0.18
+  collaboration_potential: 0.12
+  industry_potential: 0.08
+  teaching_public_value: 0.1
+watchlist:
+  researchers: []
+  institutions: []
+  companies:
+  - OLEDWorks
+  - Universal Display Corporation
+  - Samsung Display
+  - LG Display
+  - Merck
+negative_filters:
+- inorganic LED
+- perovskite solar cell
+- silicon photovoltaic
+protected_topics:
+- OLED
+- TADF
+- organic semiconductor
+- quantum chemistry
+- red-NIR emission
+- lanthanide complex
+- charge transport
+- device degradation
+risk_thresholds: medium

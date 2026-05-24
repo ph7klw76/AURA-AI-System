@@ -130,31 +130,36 @@ def _resolve_aura_llm() -> str:
         endpoint AURA uses.
     """
     explicit = os.getenv("COSCIENTIST_MODEL", "").strip()
-    if explicit:
-        return explicit
-
-    model = (
+    model = explicit if explicit else (
         os.getenv("LLM_MODEL")
         or os.getenv("AURA_MODEL")
         or os.getenv("AURA_DEFAULT_MODEL")
         or "deepseek-v4-flash"
     ).strip()
 
+    return _litellm_model(model)
+
+
+def _litellm_model(model: str) -> str:
+    """Map a plain model name to a litellm ``provider/model`` string."""
     if "/" in model:  # already litellm-formatted
         return model
     if ":" in model:  # Ollama local model (e.g. qwen3:8b)
         return f"ollama/{model}"
+    if "deepseek" in model.lower():  # native litellm deepseek provider
+        key = os.getenv("LLM_API_KEY", "")
+        if key and not os.getenv("DEEPSEEK_API_KEY"):
+            os.environ["DEEPSEEK_API_KEY"] = key
+        return f"deepseek/{model}"
 
-    # OpenAI-compatible remote (AURA's default DeepSeek endpoint).
+    # OpenAI-compatible remote.
     base = (os.getenv("REMOTE_API_URL")
             or "https://api.deepseek.com/v1/chat/completions").strip()
-    # litellm wants the API BASE, not the full chat/completions URL.
     for suffix in ("/chat/completions", "/completions"):
         if base.endswith(suffix):
             base = base[: -len(suffix)]
             break
     key = os.getenv("LLM_API_KEY", "")
-    # litellm reads these for the "openai/" provider; don't clobber if already set.
     if key and not os.getenv("OPENAI_API_KEY"):
         os.environ["OPENAI_API_KEY"] = key
     if base:

@@ -303,31 +303,38 @@ async def call_llm(
             "drop_params": True,
         }
 
-        # Try to add response_format based on schema or force_json
-        if json_schema:
+        # In lenient mode (model lacks structured output), skip response_format
+        # entirely and inject a JSON instruction into the prompt upfront — avoids
+        # a wasted API call that would be rejected anyway.
+        _lenient = os.environ.get("COSCIENTIST_LENIENT_SCHEMA", "").strip() not in ("", "0", "false", "no")
+
+        if _lenient and json_schema:
+            _json_hint = (
+                "\n\n--- IMPORTANT ---\n"
+                "You MUST respond with valid JSON only — no markdown, no explanations,"
+                " no code fences. Start your response with '{' and end with '}'.\n"
+                f"Your JSON MUST match this schema:\n{json.dumps(json_schema, indent=2)}\n"
+            )
+            completion_args["messages"][0]["content"] = prompt + _json_hint
+        elif json_schema:
             try:
                 completion_args["response_format"] = {
                     "type": "json_schema",
                     "json_schema": json_schema,
                 }
             except Exception as e:
-                # Some models/providers don't support json_schema, fall back to json_object
                 logger.warning(f"JSON schema not supported, falling back to json_object: {e}")
                 try:
                     completion_args["response_format"] = {"type": "json_object"}
                 except Exception:
-                    # Some models/providers don't support this either, silently continue
                     pass
         elif force_json:
             try:
                 completion_args["response_format"] = {"type": "json_object"}
             except Exception:
-                # Some models/providers don't support this, silently continue
                 pass
 
-        # Attempt the LLM call.  Some providers (e.g. DeepSeek v4-flash)
-        # reject ``response_format`` entirely — catch that case, strip it,
-        # and inject a JSON-output instruction into the prompt instead.
+        # Attempt the LLM call.
         try:
             response = await litellm.acompletion(**completion_args)
         except litellm.exceptions.BadRequestError as e:

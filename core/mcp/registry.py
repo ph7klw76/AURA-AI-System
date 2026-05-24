@@ -168,6 +168,8 @@ MCP_SERVER_REGISTRY: dict[str, McpServerSpec] = {
             "move_cell",
             "execute_cell",
             "execute_code",
+            "insert_execute_code_cell",
+            "connect_to_jupyter",
         }),
         launch_command=("python", "-m", "jupyter_mcp_server"),
         is_network=False,

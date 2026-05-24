@@ -1,0 +1,63 @@
+# SearXNG settings for AURA Deep Research integration
+#
+# Critical requirement: JSON output format MUST be listed under search.formats.
+# SearXNG enforces: if output_format not in settings['search']['formats']: abort(403)
+# Top-level `formats:` and `server.formats:` are both ignored for this check.
+#
+# Docs: https://docs.searxng.org/admin/settings/settings.html
+# ---------------------------------------------------------------------------
+
+use_default_settings: true
+
+server:
+  # Must match the SEARXNG_SECRET_KEY in docker-compose.yml.
+  secret_key: "fbcff5cc86e66e3466ae0822ac62775dcb1b0c5f5c069ebe7b4a3eedffb4fbd8"
+  limiter: false
+  image_proxy: false
+  bind_address: "0.0.0.0"
+  port: 8080
+
+search:
+  safe_search: 0
+  autocomplete: ""
+  default_lang: "en"
+  max_page: 10
+  # ---------------------------------------------------------------------------
+  # This is the ONLY location SearXNG checks for allowed output formats.
+  # webapp.py line 633: settings['search']['formats']
+  # ---------------------------------------------------------------------------
+  formats:
+    - html
+    - json
+
+ui:
+  static_use_hash: true
+  default_theme: simple
+
+outgoing:
+  request_timeout: 10.0
+
+enabled_plugins:
+  - Hash plugin
+  - Self Information
+  - Tracker URL remover
+enabled_plugins:
+  - Hash plugin
+  - Self Information
+  - Tracker URL remover
+
+engines:
+  - name: google
+    disabled: false
+
+  - name: bing
+    disabled: false
+
+  - name: duckduckgo
+    disabled: false
+
+  - name: qwant
+    disabled: false
+
+  - name: startpage
+    disabled: false

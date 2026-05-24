@@ -1,0 +1,23 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Runtime audit/evidence logs (generated at runtime)
+data/task_agents.jsonl
+data/deep_research/
+data/patent_evidence/
+data/evidence/
+data/reflections/
+data/logs/
+
+# Environment
+.env
+*.env
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db

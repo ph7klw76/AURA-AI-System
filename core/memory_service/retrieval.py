@@ -100,8 +100,11 @@ def build_memory_context(
     user_id: str = "",
     project_id: str = "",
     agent_name: str = "",
+    compact: bool = True,
 ) -> str:
     """Convenience: retrieve + return compact context string.
+
+    Set ``compact=False`` for semantic-mode structured context (Stage 4).
 
     Returns ``""`` when the memory service is disabled.
     """
@@ -112,4 +115,32 @@ def build_memory_context(
         project_id=project_id,
         agent_name=agent_name,
     )
-    return result.compact_context
+    if compact or not result.memories:
+        return result.compact_context
+
+    # Semantic-mode structured context (Stage 4)
+    lines: list[str] = []
+    for mem in result.memories:
+        verif_note = ""
+        if mem.memory_type == "evidence_memory":
+            verif_note = f" [verifier={mem.verifier_route}, evidence={mem.evidence_status}]"
+        elif mem.memory_type == "procedural_memory":
+            verif_note = " [requires human approval]"
+        elif mem.requires_human_review:
+            verif_note = " [needs review]"
+
+        lines.append(
+            f"Memory[{mem.memory_type}]{verif_note}: "
+            f"{_summarize_content(mem.content)}"
+        )
+    return "\n".join(lines)
+
+
+def _summarize_content(content: dict[str, object], max_len: int = 200) -> str:
+    """Build a brief text summary of memory content."""
+    import json
+
+    text = json.dumps(content, default=str)
+    if len(text) <= max_len:
+        return text
+    return text[:max_len] + "…"

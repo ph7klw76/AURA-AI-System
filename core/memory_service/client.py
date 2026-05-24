@@ -177,19 +177,114 @@ def search_memories(
 
 
 # ---------------------------------------------------------------------------
-# Write stubs (Stage 2+ — NOT implemented in Stage 1)
+# Write support (Stage 2-3)
 # ---------------------------------------------------------------------------
 
 def propose_memory(
-    content: dict[str, object],  # noqa: ARG001
-    memory_type: str = "unknown",  # noqa: ARG001
+    record: dict[str, object],
     *,
-    config: MemoryServiceConfig | None = None,  # noqa: ARG001
-) -> MemoryWriteDecisionResult:
-    """Stage 1 stub — memory writes are not yet implemented."""
-    return MemoryWriteDecisionResult(
-        candidate_id="",
-        approved=False,
-        decision="blocked",
-        reason="Memory writes not implemented in Stage 1.",
-    )
+    config: MemoryServiceConfig | None = None,
+) -> dict[str, object]:
+    """Propose a memory record to the LangGraph Memory Service.
+
+    In ``propose_only`` mode the record is sent as a proposal (pending).
+    In ``approved_only`` mode it is committed immediately.
+
+    Returns ``{"ok": True, "memory_id": "..."}`` on success.
+    Returns ``{"ok": False, "error": "..."}`` on failure.
+    """
+    cfg = config or load_memory_service_config()
+
+    if cfg.write_disabled:
+        return {"ok": False, "error": "Memory writes are disabled."}
+
+    payload: dict[str, object] = {
+        "action": "propose" if cfg.propose_only else "put",
+        "record": record,
+        "write_mode": cfg.write_mode,
+    }
+
+    try:
+        url = f"{cfg.service_url.rstrip('/')}/memories"
+        data = json.dumps(payload).encode("utf-8")
+        req = urllib.request.Request(
+            url,
+            data=data,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with urllib.request.urlopen(req, timeout=cfg.timeout_seconds) as resp:
+            body = json.loads(resp.read().decode("utf-8"))
+            if isinstance(body, dict):
+                return {
+                    "ok": True,
+                    "memory_id": str(body.get("id") or body.get("memory_id") or ""),
+                    "status": body.get("status", "proposed"),
+                }
+            return {"ok": True, "memory_id": ""}
+    except urllib.error.HTTPError as exc:
+        return {"ok": False, "error": f"HTTP {exc.code}: {exc.reason}"}
+    except urllib.error.URLError as exc:
+        return {"ok": False, "error": f"Unreachable: {exc.reason}"}
+    except Exception as exc:
+        return {"ok": False, "error": str(exc)}
+
+
+def commit_approved_memory(
+    record: dict[str, object],
+    *,
+    config: MemoryServiceConfig | None = None,
+) -> dict[str, object]:
+    """Commit an approved memory record to the LangGraph Memory Service.
+
+    Returns ``{"ok": True, "memory_id": "..."}`` on success.
+    Returns ``{"ok": False, "error": "..."}`` on failure.
+    """
+    cfg = config or load_memory_service_config()
+
+    if cfg.write_disabled:
+        return {"ok": False, "error": "Memory writes are disabled."}
+
+    payload: dict[str, object] = {
+        "action": "put",
+        "record": record,
+    }
+
+    try:
+        url = f"{cfg.service_url.rstrip('/')}/memories"
+        data = json.dumps(payload).encode("utf-8")
+        req = urllib.request.Request(
+            url,
+            data=data,
+            headers={"Content-Type": "application/json"},
+            method="PUT",
+        )
+        with urllib.request.urlopen(req, timeout=cfg.timeout_seconds) as resp:
+            body = json.loads(resp.read().decode("utf-8"))
+            if isinstance(body, dict):
+                return {
+                    "ok": True,
+                    "memory_id": str(body.get("id") or body.get("memory_id") or ""),
+                }
+            return {"ok": True, "memory_id": ""}
+    except urllib.error.HTTPError as exc:
+        return {"ok": False, "error": f"HTTP {exc.code}: {exc.reason}"}
+    except urllib.error.URLError as exc:
+        return {"ok": False, "error": f"Unreachable: {exc.reason}"}
+    except Exception as exc:
+        return {"ok": False, "error": str(exc)}
+
+
+def delete_memory(
+    memory_id: str,
+    *,
+    config: MemoryServiceConfig | None = None,
+) -> dict[str, object]:
+    """Delete a memory record — NOT IMPLEMENTED in MVP.
+
+    Requires explicit human approval before use.
+    """
+    return {
+        "ok": False,
+        "error": "Delete is not implemented. Requires explicit human approval.",
+    }

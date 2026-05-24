@@ -1858,6 +1858,33 @@ def run_aura_core(
     }
     completed_steps: list[str] = []
 
+    # ── Memory-service retrieval hook ──────────────────────────────────
+    # Retrieve relevant cross-session memories before agent execution.
+    # Failure is non-fatal — AURA continues with degraded memory context.
+    _memory_context = ""
+    try:
+        from core.memory_service import (
+            is_memory_service_enabled as _ms_enabled,
+            build_memory_context as _ms_ctx,
+        )
+        if _ms_enabled():
+            _memory_context = _ms_ctx(
+                user_input, session_id=active_session_id,
+                compact=True,
+            )
+    except Exception:
+        pass  # Non-fatal — memory service is optional
+    result["memory_service"] = {
+        "enabled": bool(_memory_context != ""),
+        "retrieved_count": 0,
+        "retrieval_degraded": False,
+        "candidate_count": 0,
+        "committed_count": 0,
+        "pending_review_count": 0,
+        "warnings": [],
+    }
+    # ──────────────────────────────────────────────────────────────────
+
     # Step 1: Strategic Governor
     try:
         decision = gov_module.run(user_input)
@@ -2141,4 +2168,39 @@ def run_aura_core(
     # pipeline_status="awaiting_user_input"; this is the success branch.
     if result.get("pipeline_status") == "in_progress":
         result["pipeline_status"] = "complete"
+
+    # ── Memory-service extraction + review hook ───────────────────────
+    # After AURA completes, extract memory candidates and run the review
+    # pipeline.  All writes are policy-gated.  Failure is non-fatal.
+    try:
+        from core.memory_service import (
+            is_memory_service_enabled as _ms2_enabled,
+            extract_memory_candidates_from_session as _ms_extract,
+            review_memory_candidates as _ms_review,
+        )
+        if _ms2_enabled():
+            candidates = _ms_extract(
+                result,
+                session_id=active_session_id,
+                user_input=user_input,
+            )
+            decisions = _ms_review(
+                candidates, result,
+                session_id=active_session_id,
+            )
+            committed = sum(1 for d in decisions if d.committed)
+            pending = sum(
+                1 for d in decisions
+                if d.decision in ("needs_human_review", "needs_verifier")
+            )
+            result["memory_service"] = {
+                **(result.get("memory_service") or {}),
+                "candidate_count": len(candidates),
+                "committed_count": committed,
+                "pending_review_count": pending,
+            }
+    except Exception:
+        pass  # Non-fatal
+    # ──────────────────────────────────────────────────────────────────
+
     return result

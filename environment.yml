@@ -1,0 +1,30 @@
+name: aura
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pip
+  - numpy
+  - pandas
+  # Pydantic v2 is REQUIRED — the codebase uses the v2-only APIs
+  # ``model_dump`` / ``model_validate`` / ``model_validate_json`` and
+  # ``@field_validator(mode="before")`` throughout (core/schemas.py,
+  # qwen_evolver/deep_research/schemas.py).  v1 is NOT compatible.
+  - pydantic>=2,<3
+  - python-dotenv
+  - rich
+  - pytest
+  - requests
+  - pyyaml
+  - pip:
+      - ollama
+      - beautifulsoup4
+      # Phase 2 Defect 9 — local-document ingestion (PDF / DOCX text extraction).
+      - pypdf
+      - python-docx
+      # Phase 2 Defect 11 — optional OCR pathway for scanned/image-only PDFs.
+      # Enabled at runtime via AURA_LOCAL_PDF_OCR=1. Requires the system
+      # `tesseract` binary to be installed separately (apt/brew/choco).
+      - pytesseract
+      - Pillow
+      - pymupdf

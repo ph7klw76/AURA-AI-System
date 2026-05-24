@@ -50,11 +50,9 @@ MCP_SERVER_REGISTRY: dict[str, McpServerSpec] = {
             "list_strategies",
             "get_configuration",
         }),
-        # Default to the real LearningCircuit/local-deep-research console
-        # script (``ldr-mcp``).  Overridable via AURA_LDR_MCP_COMMAND/_ARGS.
-        # Validated against the policy command whitelist; only used if the
-        # server is actually installed.
-        launch_command=("ldr-mcp",),
+        # Default to python -m (more reliable than ldr-mcp console script).
+        # Overridable via AURA_LDR_MCP_COMMAND/_ARGS.
+        launch_command=("python", "-m", "local_deep_research.mcp"),
         is_network=False,
         description="Local Deep Research MCP server (self-hosted research).",
         research_tools=frozenset({
@@ -66,7 +64,7 @@ MCP_SERVER_REGISTRY: dict[str, McpServerSpec] = {
         name="idea_reality",
         transport="stdio",
         allowed_tools=frozenset({"idea_check"}),
-        launch_command=("idea-reality-mcp",),
+        launch_command=("python", "-m", "idea_reality_mcp"),
         is_network=False,
         description="idea-reality MCP server (market/competition reality check).",
         research_tools=frozenset(),
@@ -121,7 +119,7 @@ MCP_SERVER_REGISTRY: dict[str, McpServerSpec] = {
         # explicit list (see dynamic_readonly).  Writes are blocked, every call
         # is human-approved, and outputs are verified by AURA.
         allowed_tools=frozenset(),
-        launch_command=("tooluniverse-smcp-stdio",),
+        launch_command=("python", "-c", "from core.mcp.tooluniverse_nonbiomed_filter import run; run()"),
         is_network=False,
         description=(
             "ToolUniverse (mims-harvard) — READ-ONLY scientific tool MCP "
@@ -150,6 +148,52 @@ MCP_SERVER_REGISTRY: dict[str, McpServerSpec] = {
         ),
         # Hypothesis generation is a long multi-agent LLM loop → research timeout.
         research_tools=frozenset({"generate_hypotheses"}),
+    ),
+    "jupyter_mcp_server": McpServerSpec(
+        name="jupyter_mcp_server",
+        transport="stdio",
+        allowed_tools=frozenset({
+            "list_files",
+            "list_kernels",
+            "use_notebook",
+            "list_notebooks",
+            "restart_notebook",
+            "unuse_notebook",
+            "read_notebook",
+            "read_cell",
+            "insert_cell",
+            "overwrite_cell_source",
+            "edit_cell_source",
+            "delete_cell",
+            "move_cell",
+            "execute_cell",
+            "execute_code",
+        }),
+        launch_command=("python", "-m", "jupyter_mcp_server"),
+        is_network=False,
+        description=(
+            "jupyter-mcp-server2 — Jupyter notebook MCP server for "
+            "programmatic notebook editing, cell execution, and kernel management."
+        ),
+        research_tools=frozenset(),
+        token_env_vars=("JUPYTER_TOKEN",),
+    ),
+    "paper_qa": McpServerSpec(
+        name="paper_qa",
+        transport="stdio",
+        allowed_tools=frozenset({
+            "paperqa_query",
+            "paperqa_add_pdf",
+            "paperqa_status",
+        }),
+        launch_command=("python", "-m", "paperqa.mcp_server"),
+        is_network=False,
+        description=(
+            "paper-qa2 — Document Q&A MCP server. Add PDFs and ask "
+            "scientific questions about them. Powered by LLM-based retrieval."
+        ),
+        research_tools=frozenset({"paperqa_query"}),
+        token_env_vars=("DEEPSEEK_API_KEY",),
     ),
 }
 

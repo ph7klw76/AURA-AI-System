@@ -38,6 +38,10 @@ __all__ = [
     "external_github_code_review",
     "external_tooluniverse",
     "external_generate_hypotheses",
+    "external_jupyter_notebook_tool",
+    "external_paper_qa_query",
+    "external_paper_qa_add_pdf",
+    "external_paper_qa_status",
     "GITHUB_MAINTENANCE_PLAYBOOK",
     "call_mcp_tool",
     "is_mcp_available",
@@ -337,6 +341,77 @@ def external_generate_hypotheses(
     return _run_adapter(
         server="open_coscientist", tool="generate_hypotheses",
         arguments=args, query=research_goal, session_id=session_id,
+    )
+
+
+# ---------------------------------------------------------------------------
+# jupyter-mcp-server2 adapter
+# ---------------------------------------------------------------------------
+
+
+def external_jupyter_notebook_tool(
+    tool: str, arguments: dict | None = None, session_id: str | None = None,
+) -> dict[str, Any]:
+    """Call a jupyter-mcp-server2 tool (notebook editing, cell execution, etc.).
+
+    Tools: list_files, list_kernels, use_notebook, list_notebooks,
+    read_notebook, read_cell, insert_cell, execute_cell, execute_code, etc.
+    Returns ``notebook_tool_result`` — UNVERIFIED notebook manipulation.
+    """
+    args = arguments if isinstance(arguments, dict) else {}
+    query = args.get("path") or args.get("notebook_path") or args.get("code", f"{tool}")[:200]
+    return _run_adapter(
+        server="jupyter_mcp_server", tool=tool, arguments=args,
+        query=str(query), session_id=session_id,
+    )
+
+
+# ---------------------------------------------------------------------------
+# paper-qa2 adapters
+# ---------------------------------------------------------------------------
+
+
+def external_paper_qa_query(
+    question: str, session_id: str | None = None,
+) -> dict[str, Any]:
+    """Ask a question about documents indexed in paper-qa2.
+
+    Returns ``document_qa_result`` — UNVERIFIED LLM-based answer from
+    indexed scientific PDFs.
+    """
+    return _run_adapter(
+        server="paper_qa", tool="paperqa_query",
+        arguments={"question": question},
+        query=question, session_id=session_id,
+    )
+
+
+def external_paper_qa_add_pdf(
+    pdf_path: str, docname: str = "", session_id: str | None = None,
+) -> dict[str, Any]:
+    """Add a PDF to the paper-qa2 index for later querying.
+
+    Returns ``document_index_result``.
+    """
+    args: dict[str, Any] = {"path": pdf_path}
+    if docname:
+        args["docname"] = docname
+    return _run_adapter(
+        server="paper_qa", tool="paperqa_add_pdf",
+        arguments=args, query=pdf_path, session_id=session_id,
+    )
+
+
+def external_paper_qa_status(
+    session_id: str | None = None,
+) -> dict[str, Any]:
+    """Get paper-qa2 status (indexed documents, settings).
+
+    Returns ``document_status_result``.
+    """
+    return _run_adapter(
+        server="paper_qa", tool="paperqa_status",
+        arguments={}, query="status", session_id=session_id,
     )
 
 

@@ -7,34 +7,49 @@ from unittest import mock
 import pytest
 
 
-class TestMaybePlanAgentsDisabledByDefault:
-    """When disabled, the planner hook returns the Governor's agents unchanged."""
+class TestMaybePlanAgentsEnabledByDefault:
+    """Planner is enabled by default — returns augmented agents."""
 
-    def test_disabled_returns_governor_ordered_unchanged(self):
+    def test_default_enabled_returns_enabled_meta(self):
+        from core.orchestrator import _maybe_plan_agents
+
+        gov_ordered = ["research_scout"]
+        gov_decision = {"selected_agents": ["research_scout"]}
+
+        with mock.patch("core.planning.propose_agent_plan") as mock_propose:
+            from core.planning.schemas import AgentPlan
+            mock_propose.return_value = AgentPlan(
+                primary_agent="research_scout",
+                requires_verifier=True,
+                risk_level="medium",
+                confidence="medium",
+            )
+            with mock.patch("core.planning.validate_agent_plan") as mock_validate:
+                from core.planning.schemas import ValidatedAgentPlan
+                mock_validate.return_value = ValidatedAgentPlan(
+                    ok=True,
+                    selected_agents=["research_scout", "scientific_verifier"],
+                    risk_level="medium",
+                    requires_verifier=True,
+                    requires_human_review=False,
+                )
+                result = _maybe_plan_agents("draft a grant", "s1", gov_decision, gov_ordered)
+
+        assert result["planner"]["enabled"] is True
+        assert result["planner"]["plan_used"] is True
+        assert result["planner"]["requires_human_review"] is True
+
+    def test_disabled_when_explicitly_set_to_0(self):
+        """When set to 0, returns Governor agents unchanged."""
         from core.orchestrator import _maybe_plan_agents
 
         gov_ordered = ["research_scout", "grant_architect"]
-        gov_decision = {
-            "selected_agents": ["research_scout", "grant_architect"],
-            "risk_level": "medium",
-        }
-        result = _maybe_plan_agents("draft a grant", "s1", gov_decision, gov_ordered)
+        gov_decision = {"selected_agents": list(gov_ordered)}
+
+        with mock.patch("core.planning.is_planner_enabled", return_value=False):
+            result = _maybe_plan_agents("draft a grant", "s2", gov_decision, gov_ordered)
+
         assert result["augmented_ordered"] == gov_ordered
-        assert result["planner"]["enabled"] is False
-
-    def test_disabled_does_not_remove_agents(self):
-        from core.orchestrator import _maybe_plan_agents
-
-        gov_ordered = ["research_scout", "patent_intelligence", "founder_innovation"]
-        result = _maybe_plan_agents("analyze patent", "s2", {}, gov_ordered)
-        assert result["augmented_ordered"] == gov_ordered
-
-    def test_disabled_records_planner_meta(self):
-        from core.orchestrator import _maybe_plan_agents
-
-        result = _maybe_plan_agents("test", "s3", {}, ["research_scout"])
-        assert result["planner"]["plan_used"] is False
-        assert result["planner"]["fallback_used"] is False
         assert result["planner"]["enabled"] is False
 
 
@@ -43,10 +58,10 @@ class TestMaybePlanAgentsEnabled:
 
     @pytest.fixture(autouse=True)
     def enable_planner(self):
-        old = os.environ.get("AURA_LLM_PLANNER_ENABLED", "")
+        old = os.environ.get("AURA_LLM_PLANNER_ENABLED")
         os.environ["AURA_LLM_PLANNER_ENABLED"] = "1"
         yield
-        if old:
+        if old is not None:
             os.environ["AURA_LLM_PLANNER_ENABLED"] = old
         else:
             os.environ.pop("AURA_LLM_PLANNER_ENABLED", None)
@@ -165,10 +180,10 @@ class TestRunAuraCoreWithPlanner:
 
     @pytest.fixture(autouse=True)
     def enable_planner(self):
-        old = os.environ.get("AURA_LLM_PLANNER_ENABLED", "")
+        old = os.environ.get("AURA_LLM_PLANNER_ENABLED")
         os.environ["AURA_LLM_PLANNER_ENABLED"] = "1"
         yield
-        if old:
+        if old is not None:
             os.environ["AURA_LLM_PLANNER_ENABLED"] = old
         else:
             os.environ.pop("AURA_LLM_PLANNER_ENABLED", None)
@@ -220,8 +235,8 @@ class TestRunAuraCoreWithPlanner:
         assert "selected_agents" in planner
 
     def test_planner_disabled_no_live_llm(self):
-        """When disabled (default), run_aura_core works without planner."""
-        os.environ.pop("AURA_LLM_PLANNER_ENABLED", None)
+        """When disabled via env=0, run_aura_core works without planner."""
+        os.environ["AURA_LLM_PLANNER_ENABLED"] = "0"
         from core.orchestrator import run_aura_core
 
         with mock.patch("agents.strategic_governor.run") as mock_gov:

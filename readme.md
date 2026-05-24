@@ -177,9 +177,9 @@ makes final decisions.
 
 | Variable | Default | Description |
 |---|---|---|
-| `AURA_LLM_PLANNER_ENABLED` | `0` | Enable the LLM planner |
-| `AURA_LLM_PLANNER_ALLOW_EXTERNAL_MCP` | `0` | Allow MCP evidence provider suggestions |
-| `AURA_LLM_PLANNER_ALLOW_TASK_AGENTS` | `0` | Allow task-agent helper suggestions |
+| `AURA_LLM_PLANNER_ENABLED` | `1` | Enable the LLM planner |
+| `AURA_LLM_PLANNER_ALLOW_EXTERNAL_MCP` | `1` | Allow MCP evidence provider suggestions |
+| `AURA_LLM_PLANNER_ALLOW_TASK_AGENTS` | `1` | Allow task-agent helper suggestions |
 | `AURA_LLM_PLANNER_REQUIRE_VERIFIER` | `1` | Force verifier requirement |
 | `AURA_LLM_PLANNER_REQUIRE_POLICY` | `1` | Require policy validation |
 
@@ -199,8 +199,10 @@ makes final decisions.
 - Call arbitrary MCP servers or run shell commands
 
 ### Safety invariants
-- **Disabled by default** — no behaviour change when off
+- **Enabled by default** — with human-approval gate on every LLM-chosen plan
 - **Advisory only** — LLM proposes, never executes
+- **Human approval gate** — every LLM-chosen plan AND every task-agent dispatch requires approval
+- **Fallback is approval-free** — deterministic keyword routing bypasses the gate
 - **Unknown agents blocked** — only pre-approved AURA agents allowed
 - **Verifier cannot be disabled** — forced on for scientific/evidence/MCP/task-agent tasks
 - **Governor primacy preserved** — planner adds agents, never removes Governor-selected ones

@@ -88,7 +88,7 @@ class TestPolicyValidation:
         result = validate_agent_plan(plan, ctx)
         assert result.requires_human_review is True
 
-    def test_external_mcp_blocked_by_default(self):
+    def test_external_mcp_allowed_by_default(self):
         plan = AgentPlan(
             primary_agent="research_scout",
             external_mcp=["local_deep_research"],
@@ -96,11 +96,11 @@ class TestPolicyValidation:
         )
         ctx = PlanningContext(user_prompt="Research on biomarkers")
         result = validate_agent_plan(plan, ctx)
-        # External MCP blocked by default → stripped
-        assert result.external_mcp == []
+        # External MCP allowed by default
+        assert "local_deep_research" in result.external_mcp
 
-    def test_external_mcp_allowed_when_enabled(self):
-        os.environ["AURA_LLM_PLANNER_ALLOW_EXTERNAL_MCP"] = "1"
+    def test_external_mcp_blocked_when_disabled(self):
+        os.environ["AURA_LLM_PLANNER_ALLOW_EXTERNAL_MCP"] = "0"
         try:
             plan = AgentPlan(
                 primary_agent="research_scout",
@@ -109,19 +109,34 @@ class TestPolicyValidation:
             )
             ctx = PlanningContext(user_prompt="Research on biomarkers")
             result = validate_agent_plan(plan, ctx)
-            assert "local_deep_research" in result.external_mcp
+            assert result.external_mcp == []
         finally:
             os.environ.pop("AURA_LLM_PLANNER_ALLOW_EXTERNAL_MCP", None)
 
-    def test_task_agents_blocked_by_default(self):
+    def test_task_agents_allowed_by_default(self):
         plan = AgentPlan(
             primary_agent="research_scout",
             helper_agents=["claim_extractor"],
             requires_verifier=True,
         )
-        ctx = PlanningContext(user_prompt="extract claims")
+        ctx = PlanningContext(user_prompt="extract claims from research")
         result = validate_agent_plan(plan, ctx)
-        assert result.helper_agents == []
+        # Task agents allowed by default
+        assert "claim_extractor" in result.helper_agents
+
+    def test_task_agents_blocked_when_disabled(self):
+        os.environ["AURA_LLM_PLANNER_ALLOW_TASK_AGENTS"] = "0"
+        try:
+            plan = AgentPlan(
+                primary_agent="research_scout",
+                helper_agents=["claim_extractor"],
+                requires_verifier=True,
+            )
+            ctx = PlanningContext(user_prompt="extract claims")
+            result = validate_agent_plan(plan, ctx)
+            assert result.helper_agents == []
+        finally:
+            os.environ.pop("AURA_LLM_PLANNER_ALLOW_TASK_AGENTS", None)
 
     def test_always_blocked_actions_in_result(self):
         plan = AgentPlan(

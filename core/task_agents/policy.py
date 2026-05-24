@@ -138,7 +138,7 @@ def _validate_tool(tool: str) -> str | None:
 
 def is_task_agents_enabled() -> bool:
     """Check whether task agents are globally enabled."""
-    return _env_bool("AURA_TASK_AGENTS_ENABLED", False)
+    return _env_bool("AURA_TASK_AGENTS_ENABLED", True)
 
 
 def max_per_session() -> int:

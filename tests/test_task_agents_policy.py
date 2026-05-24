@@ -150,8 +150,8 @@ class TestDisabledByDefault:
         if old is not None:
             os.environ["AURA_TASK_AGENTS_ENABLED"] = old
 
-    def test_disabled_when_not_set(self):
-        assert is_task_agents_enabled() is False
+    def test_enabled_by_default(self):
+        assert is_task_agents_enabled() is True
 
     def test_enabled_when_set_1(self):
         os.environ["AURA_TASK_AGENTS_ENABLED"] = "1"

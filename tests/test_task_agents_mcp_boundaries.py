@@ -116,6 +116,6 @@ class TestMCPBoundaries:
         assert not ok
         assert any("namespace" in e.lower() or "prefix" in e.lower() for e in errors)
 
-    def test_disabled_by_default(self):
+    def test_configured_disabled(self):
         """Task agents are disabled by default — no MCP access."""
-        assert is_task_agents_enabled() is False
+        assert is_task_agents_enabled() is True

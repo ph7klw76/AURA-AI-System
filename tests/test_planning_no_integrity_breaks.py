@@ -28,7 +28,7 @@ class TestVerifierCannotBeDisabled:
         assert result.requires_verifier is True
         assert "scientific_verifier" in result.selected_agents
 
-    def test_external_mcp_forces_verifier(self):
+    def test_external_mcp_forced_verifier_and_review(self):
         plan = _plan(
             primary_agent="research_scout",
             external_mcp=["local_deep_research"],
@@ -37,6 +37,8 @@ class TestVerifierCannotBeDisabled:
         ctx = PlanningContext(user_prompt="do research")
         result = validate_agent_plan(plan, ctx)
         assert result.requires_verifier is True
+        # External MCP allowed by default — but still forces verifier
+        assert "local_deep_research" in result.external_mcp
 
     def test_task_agents_force_verifier(self):
         plan = _plan(

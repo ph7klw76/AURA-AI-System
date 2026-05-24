@@ -139,6 +139,27 @@ def _maybe_plan_agents(
         else:
             meta["plan_used"] = True
             plan_audit.log_planner_succeeded(session_id, raw_plan.plan_id, raw_hash, raw_plan)
+
+        # ── Human‑approval gate: LLM-chosen plans require review ─────────
+        # When the planner is enabled, any plan that was produced by the LLM
+        # (not fallback) must be approved by a human before execution.
+        # External MCP and task-agent suggestions always require review.
+        if meta["plan_used"]:
+            meta["requires_human_review"] = True
+            meta["human_review_reason"] = (
+                "LLM planner proposal — requires human approval before execution."
+            )
+        if validated.external_mcp and not meta.get("requires_human_review"):
+            meta["requires_human_review"] = True
+            meta["human_review_reason"] = (
+                "External MCP evidence providers proposed — requires human approval."
+            )
+        if validated.helper_agents and not meta.get("requires_human_review"):
+            meta["requires_human_review"] = True
+            meta["human_review_reason"] = (
+                "Task-agents proposed — requires human approval."
+            )
+        # ────────────────────────────────────────────────────────────────
     except Exception as exc:
         # Planner crashed — use deterministic fallback, never break pipeline.
         plan_audit.log_planner_failed(session_id, str(exc))
@@ -160,13 +181,15 @@ def _maybe_plan_agents(
         if a not in augmented:
             augmented.append(a)
 
-    # 6. Populate metadata
+    # 6. Populate metadata (preserve gate-overrides for human review)
     meta["selected_agents"] = augmented
     meta["helper_agents"] = validated.helper_agents
     meta["external_mcp"] = validated.external_mcp
     meta["risk_level"] = validated.risk_level
     meta["requires_verifier"] = validated.requires_verifier
-    meta["requires_human_review"] = validated.requires_human_review
+    # Only overwrite requires_human_review if the gate didn't already set it
+    if not meta.get("requires_human_review"):
+        meta["requires_human_review"] = validated.requires_human_review
     meta["warnings"] = validated.validation_warnings
 
     return {"augmented_ordered": augmented, "planner": meta}
@@ -1737,6 +1760,17 @@ def _dispatch_task_agent_requests(result: dict, session_id: str) -> None:
             context=ctx,
         )
 
+        # ── Human‑approval gate: every dispatched task agent requires review
+        # Task agents are AI-generated helpers — their outputs must be approved
+        # by a human before any consequential use.
+        log_approval_event({
+            "user_input": role + ": " + subtask[:200],
+            "reason": "Task agent dispatched — requires human approval.",
+            "source": "task_agent_dispatcher",
+            "requested_role": role,
+            "subtask": subtask[:300],
+        })
+
         if dec.create_agent and dec.proposed_spec:
             out = run_task_agent(dec.proposed_spec, ctx)
             results.append({
@@ -1751,6 +1785,8 @@ def _dispatch_task_agent_requests(result: dict, session_id: str) -> None:
                 "confidence": out.confidence,
                 "verified_by_aura": False,
                 "requires_verification": True,
+                "requires_human_approval": True,
+                "human_approval_reason": "Task agent output — requires human review before use.",
             })
             created += 1
         elif dec.use_existing_agent:
@@ -1872,7 +1908,7 @@ def run_aura_core(
 
     # ── Advisory LLM Agent Planner (Stage 2, optional) ────────────────────
     # The planner augments agent selection — it may ADD agents but NEVER
-    # removes Governor-selected agents.  Disabled by default; non-fatal on
+    # removes Governor-selected agents.  Enabled by default; non-fatal on
     # failure.  Planner metadata is recorded in result["llm_agent_planner"].
     try:
         planner_result = _maybe_plan_agents(
@@ -1887,7 +1923,24 @@ def run_aura_core(
             "selected_agents": list(ordered_agents),
             "fallback_used": True,
         }
-    # ──────────────────────────────────────────────────────────────────────
+
+    # ── Human‑approval gate: planner gate ──────────────────────────────
+    # When the LLM planner produced a plan (plan_used=True), force human
+    # approval on the Governor decision so the pipeline gate activates.
+    if result.get("llm_agent_planner", {}).get("requires_human_review"):
+        decision["requires_approval"] = True
+        existing = decision.get("approval_reason", "")
+        suffix = result["llm_agent_planner"].get("human_review_reason", "")
+        decision["approval_reason"] = (
+            f"{existing}; {suffix}" if existing else suffix
+        )
+        log_approval_event({
+            "user_input": user_input,
+            "reason": decision["approval_reason"],
+            "decision": decision,
+            "source": "llm_agent_planner",
+        })
+    # ──────────────────────────────────────────────────────────────────
 
     # Step 4: Specialist loop (canonical order with full inter-agent context)
     for agent_name in ordered_agents:

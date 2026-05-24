@@ -90,15 +90,14 @@ class TestMockedPlannerPipeline:
         assert result.ok is True
         assert all(a in PLANNABLE_AGENTS for a in result.selected_agents)
 
-    def test_blocked_external_mcp_cleared(self):
-        """External MCP suggestions are cleared when flag is off."""
+    def test_external_mcp_preserved_by_default(self):
+        """External MCP suggestions are now allowed by default."""
         plan = AgentPlan(
             primary_agent="research_scout",
-            external_mcp=["local_deep_research", "arbitrary_mcp", "idea_reality"],
+            external_mcp=["local_deep_research", "idea_reality"],
             requires_verifier=True,
         )
         ctx = PlanningContext(user_prompt="research biomarkers")
         result = validate_agent_plan(plan, ctx)
-        assert result.external_mcp == []
-        assert any("blocked" in w.lower() or "mcp" in w.lower()
-                   for w in result.validation_warnings)
+        assert len(result.external_mcp) == 2
+        assert "local_deep_research" in result.external_mcp

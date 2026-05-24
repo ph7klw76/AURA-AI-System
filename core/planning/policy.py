@@ -32,15 +32,15 @@ def _env_bool(name: str, default: bool) -> bool:
 
 
 def _is_planner_enabled() -> bool:
-    return _env_bool("AURA_LLM_PLANNER_ENABLED", False)
+    return _env_bool("AURA_LLM_PLANNER_ENABLED", True)
 
 
 def _allow_external_mcp() -> bool:
-    return _env_bool("AURA_LLM_PLANNER_ALLOW_EXTERNAL_MCP", False)
+    return _env_bool("AURA_LLM_PLANNER_ALLOW_EXTERNAL_MCP", True)
 
 
 def _allow_task_agents() -> bool:
-    return _env_bool("AURA_LLM_PLANNER_ALLOW_TASK_AGENTS", False)
+    return _env_bool("AURA_LLM_PLANNER_ALLOW_TASK_AGENTS", True)
 
 
 def _require_policy() -> bool:

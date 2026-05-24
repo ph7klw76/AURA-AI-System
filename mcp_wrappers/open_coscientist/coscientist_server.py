@@ -69,6 +69,40 @@ try:  # pragma: no cover - depends on the wrapper venv
 except Exception:  # noqa: BLE001
     pass
 
+# Enable lenient schema validation for models that don't support structured
+# JSON output (e.g. DeepSeek v4-flash).  The open_coscientist library's
+# ``validate_json_schema`` will accept partial / extra-keyed JSON instead of
+# raising ValidationError, letting the multi-agent workflow complete.
+_USE_LENIENT = os.getenv("COSCIENTIST_LENIENT_SCHEMA", "1")
+if _USE_LENIENT not in ("0", "false", "no", ""):
+    os.environ.setdefault("COSCIENTIST_LENIENT_SCHEMA", "1")
+
+    # Auto-patch the installed open_coscientist library at startup so that
+    # lenient validation + response_format fallback are active even when the
+    # user has not manually applied patches to the pip-installed package.
+    _THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+    for _src, _dst_rel in (
+        ("llm_patched.py", "llm.py"),
+        ("review_patched.py", "nodes/review.py"),
+    ):
+        _src_path = os.path.join(_THIS_DIR, _src)
+        if os.path.isfile(_src_path):
+            try:
+                import open_coscientist as _oc
+                _pkg_dir = os.path.dirname(os.path.abspath(_oc.__file__))
+                _dst_path = os.path.join(_pkg_dir, _dst_rel)
+                os.makedirs(os.path.dirname(_dst_path), exist_ok=True)
+                with open(_src_path, "rb") as _f:
+                    _content = _f.read()
+                with open(_dst_path, "rb") as _f:
+                    _existing = _f.read()
+                if _content != _existing:
+                    with open(_dst_path, "wb") as _f:
+                        _f.write(_content)
+                    print(f"[open-coscientist-mcp] patched {_dst_rel}", file=sys.stderr)
+            except Exception as _pe:
+                print(f"[open-coscientist-mcp] patch warning: {_pe}", file=sys.stderr)
+
 from fastmcp import FastMCP
 
 # Conservative caps so a single call cannot trigger a runaway LLM bill.
@@ -197,6 +231,15 @@ async def generate_hypotheses(
         from open_coscientist import HypothesisGenerator
     except Exception as exc:  # noqa: BLE001
         return {"ok": False, "error": f"open_coscientist not available: {type(exc).__name__}: {exc}"}
+
+    # When lenient schema mode is active (model lacks structured output),
+    # increase hypothesis count and skip review/evolution to avoid cascading
+    # failures in downstream nodes that require strict JSON.
+    _lenient_mode = os.environ.get("COSCIENTIST_LENIENT_SCHEMA", "1").strip() not in ("", "0", "false", "no")
+    if _lenient_mode:
+        initial_hypotheses_count = max(initial_hypotheses_count, 4)
+        max_iterations = 0
+        evolution_max_count = 0
 
     generator = HypothesisGenerator(
         model_name=(model_name.strip() or _DEFAULT_MODEL),

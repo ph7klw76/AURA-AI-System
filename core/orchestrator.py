@@ -1563,6 +1563,89 @@ def _build_paused_result(
     return result
 
 
+def _dispatch_task_agent_requests(result: dict, session_id: str) -> None:
+    """Dispatch task-agent requests from the Strategic Governor decision.
+
+    Task agents are disabled by default.  When enabled, the Governor may
+    include ``task_agent_requests`` in its decision — a list of
+    ``{role, subtask, context}`` dicts.  Each is gated through the overlap
+    registry + policy validation + runner.  Results are stored in
+    ``result["task_agent_results"]`` as auxiliary evidence only and MUST
+    pass through the Scientific Verifier before any final use.
+    """
+    try:
+        from core.task_agents import is_task_agents_enabled, maybe_create_task_agent, run_task_agent
+        from core.task_agents.policy import max_per_session as _max_per_session
+    except ImportError:
+        return  # task_agents package not installed — graceful no-op
+
+    if not is_task_agents_enabled():
+        return
+
+    decision = result.get("strategic_governor", {}) or {}
+    requests = decision.get("task_agent_requests") or []
+    if not isinstance(requests, list) or not requests:
+        return
+
+    results: list[dict] = result.setdefault("task_agent_results", [])
+    cap = _max_per_session()
+    created = 0
+
+    for req in requests[:cap]:
+        if created >= cap:
+            break
+        role = (req.get("role") or req.get("requested_role") or "").strip()
+        subtask = (req.get("subtask") or "").strip()
+        ctx = req.get("context") or {}
+        if not role or not subtask:
+            continue
+
+        dec = maybe_create_task_agent(
+            session_id=session_id,
+            parent_agent="orchestrator",
+            requested_role=role,
+            subtask=subtask,
+            context=ctx,
+        )
+
+        if dec.create_agent and dec.proposed_spec:
+            out = run_task_agent(dec.proposed_spec, ctx)
+            results.append({
+                "role": role,
+                "subtask": subtask,
+                "ok": out.ok,
+                "summary": out.summary,
+                "findings": out.findings,
+                "evidence_records": out.evidence_records,
+                "claims_for_verification": out.claims_for_verification,
+                "limitations": out.limitations,
+                "confidence": out.confidence,
+                "verified_by_aura": False,
+                "requires_verification": True,
+            })
+            created += 1
+        elif dec.use_existing_agent:
+            results.append({
+                "role": role,
+                "subtask": subtask,
+                "routed_to": dec.use_existing_agent,
+                "reason": dec.reason,
+                "ok": True,
+                "summary": f"Routed to existing agent: {dec.use_existing_agent}",
+                "verified_by_aura": False,
+                "requires_verification": True,
+            })
+        else:
+            results.append({
+                "role": role,
+                "subtask": subtask,
+                "ok": False,
+                "summary": dec.reason,
+                "verified_by_aura": False,
+                "requires_verification": True,
+            })
+
+
 def run_aura_core(
     user_input: str,
     *,
@@ -1696,6 +1779,22 @@ def run_aura_core(
                 pending_output=output,
                 completed_steps=completed_steps,
             )
+
+    # ── Task-scoped agent integration (Phase 2, optional) ──────────────────
+    # Task agents are disabled by default (AURA_TASK_AGENTS_ENABLED=0).
+    # When enabled, the Strategic Governor may request narrow helper agents
+    # via the ``task_agent_requests`` key in its decision.  Each request is
+    # gated through the overlap registry + policy validation + runner, and
+    # every result is marked ``verified_by_aura=False`` so the Scientific
+    # Verifier (below) is the sole authority that approves them for final use.
+    try:
+        _dispatch_task_agent_requests(result, session_id)
+    except Exception as _ta_exc:
+        result["errors"].append({
+            "agent": "task_agent_dispatcher",
+            "error": f"Task-agent dispatch failed (non-fatal): {_ta_exc}",
+        })
+    # ────────────────────────────────────────────────────────────────────────
 
     # Step 5: Run holistic session‑wide verifier (issue 8 & 9)
     holistic = _run_holistic_verifier(user_input, decision, result)

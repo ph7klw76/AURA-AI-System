@@ -23,12 +23,12 @@ class TestConfigDefaults:
         for k, v in old.items():
             os.environ[k] = v
 
-    def test_disabled_by_default(self):
-        assert is_memory_service_enabled() is False
+    def test_enabled_by_default(self):
+        assert is_memory_service_enabled() is True
 
     def test_all_defaults(self):
         cfg = load_memory_service_config()
-        assert cfg.enabled is False
+        assert cfg.enabled is True
         assert cfg.service_url == "http://localhost:2024"
         assert cfg.write_mode == "propose_only"
         assert cfg.require_review_for_procedural is True
@@ -42,8 +42,8 @@ class TestConfigDefaults:
 
     def test_properties(self):
         cfg = load_memory_service_config()
-        assert cfg.write_disabled is True   # disabled + not enabled
-        assert cfg.propose_only is False    # propose_only but not enabled
+        assert cfg.write_disabled is False  # enabled + propose_only
+        assert cfg.propose_only is True
         assert cfg.approved_only is False
 
 

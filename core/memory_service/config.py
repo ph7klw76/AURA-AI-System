@@ -61,7 +61,7 @@ class MemoryServiceConfig:
 def load_memory_service_config() -> MemoryServiceConfig:
     """Load memory-service configuration from environment variables."""
     return MemoryServiceConfig(
-        enabled=_env_bool("AURA_MEMORY_SERVICE_ENABLED", False),
+        enabled=_env_bool("AURA_MEMORY_SERVICE_ENABLED", True),
         service_url=os.environ.get("AURA_MEMORY_SERVICE_URL", "http://localhost:2024"),
         write_mode=os.environ.get("AURA_MEMORY_WRITE_MODE", "propose_only"),
         require_review_for_procedural=_env_bool(

@@ -3,7 +3,7 @@ __pycache__/
 *.pyc
 
 # Runtime audit/evidence logs (generated at runtime)
-data/task_agents.jsonl
+data/*.jsonl
 data/deep_research/
 data/patent_evidence/
 data/evidence/

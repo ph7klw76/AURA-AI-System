@@ -1,0 +1,17 @@
+{
+  "mission_id": "28669ab9aa33",
+  "what_worked": [
+    "Seeded with 6 queries",
+    "Used 15 sources"
+  ],
+  "what_failed": [],
+  "wasted_search_paths": [],
+  "high_value_source_patterns": [
+    "searxng"
+  ],
+  "common_missing_evidence": [
+    "verdict: human_review"
+  ],
+  "proposed_workflow_rules": [],
+  "requires_human_approval": true
+}
